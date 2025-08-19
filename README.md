@@ -3,7 +3,7 @@
 ==========================================================================
 
 GitHub Actions: 
-![Maven build](https://github.com/pi4j/pi4j-drivers/workflows/build/badge.svg)
+![Maven build](https://github.com/pi4j/pi4j-drivers/workflows/Build/badge.svg)
 
 **THIS IS THE VERY START OF A NEW PROJECT. NO USABLE CODE IS YET AVAILABLE.**
 
