@@ -1,4 +1,5 @@
-import com.pi4j.driver.Main;
+package com.pi4j.driver;
+
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
