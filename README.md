@@ -48,7 +48,7 @@ The drivers project will allow users to use covered hardware in a straightforwar
 * @fdelporte
   * Documentation on the Pi4J website
 * Many others volunteered to contribute their existing driver implementations
-*  See this [Pi4J Discussion](https://github.com/Pi4J/pi4j/discussions/378)
+  * See this [Pi4J Discussion](https://github.com/Pi4J/pi4j/discussions/378)
 
 ### Policies / Properties
 
