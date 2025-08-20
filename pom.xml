@@ -28,6 +28,7 @@
         <junit.jupiter.version>5.12.1</junit.jupiter.version>
 
         <!-- BUILD PLUGIN VERSIONS -->
+        <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
         <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
         <maven-javadoc-plugin.version>3.11.1</maven-javadoc-plugin.version>
         <maven-surefire-plugin.version>3.2.5</maven-surefire-plugin.version>
@@ -98,7 +99,35 @@
             <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>
+            <build>
+            <plugins>
+                <!-- CHECKSTYLE -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-checkstyle-plugin</artifactId>
+                    <version>${maven-checkstyle-plugin.version}</version>
+                    <executions>
+                        <execution>
+                            <id>checkstyle-check</id>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                            <phase>validate</phase>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <failsOnError>true</failsOnError>
+                        <configLocation>config/checkstyle/checkstyle.xml</configLocation>
+                        <excludes>**/module-info.java</excludes>
+                        <outputFileFormat>plain</outputFileFormat>
+                        <consoleOutput>true</consoleOutput>
+                    </configuration>
+                </plugin>
+            </plugins>
+            </build>
         </profile>
+
+
 
         <!-- BUILD & INCLUDE JAVA SOURCES JAR  -->
         <profile>
