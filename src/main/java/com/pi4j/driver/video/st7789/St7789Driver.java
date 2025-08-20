@@ -15,9 +15,9 @@ import org.slf4j.LoggerFactory;
 import com.pi4j.driver.interfaces.Video;
 import com.pi4j.driver.LedColor;
 
-public class St7789 implements Video {
+public class St7789Driver implements Video {
 
-    private static Logger log = LoggerFactory.getLogger(St7789.class);
+    private static Logger log = LoggerFactory.getLogger(St7789Driver.class);
 
     private final int BITS_PER_PIXEL = 16;
     private final int OFFSET = 80;
@@ -40,7 +40,7 @@ public class St7789 implements Video {
     private Spi spi;
     private DigitalOutput dc;
 
-    public St7789(Spi spi, DigitalOutput dc) {
+    public St7789Driver(Spi spi, DigitalOutput dc) {
 
         this.spi = spi;
         this.dc = dc;
