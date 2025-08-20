@@ -1,4 +1,4 @@
-package com.pi4j.driver.videoDisplay;
+package com.pi4j.driver.video;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
@@ -12,10 +12,10 @@ import com.pi4j.io.spi.Spi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.pi4j.driver.interfaces.VideoDisplay;
+import com.pi4j.driver.interfaces.Video;
 import com.pi4j.driver.LedColor;
 
-public class St7789 implements VideoDisplay {
+public class St7789 implements Video {
 
     private static Logger log = LoggerFactory.getLogger(St7789.class);
 

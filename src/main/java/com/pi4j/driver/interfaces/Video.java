@@ -2,7 +2,7 @@ package com.pi4j.driver.interfaces;
 
 import java.awt.image.BufferedImage;
 
-public interface VideoDisplay {
+public interface Video {
 
 	void display(BufferedImage img) throws Exception;
 
