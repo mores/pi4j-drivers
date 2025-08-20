@@ -1,4 +1,4 @@
-package com.pi4j.driver.video;
+package com.pi4j.driver.video.st7789;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
