@@ -12,10 +12,9 @@ import com.pi4j.io.spi.Spi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.pi4j.driver.interfaces.Video;
 import com.pi4j.driver.LedColor;
 
-public class St7789Driver implements Video {
+public class St7789Driver {
 
     private static Logger log = LoggerFactory.getLogger(St7789Driver.class);
 
@@ -97,7 +96,7 @@ public class St7789Driver implements Video {
             throw new IllegalArgumentException("ST7789 bad command value " + x);
         }
 
-        log.trace("Command: " + x);
+        log.trace("Command: {}", x);
 
         dc.off();
         byte[] buffer = new byte[1];
@@ -121,9 +120,9 @@ public class St7789Driver implements Video {
 
         String raw = java.util.HexFormat.of().formatHex(x);
         if (raw.length() > 100) {
-            log.trace("Data: " + x.length + " " + raw.substring(0, 80));
+            log.trace("Data: {} {}", x.length, raw.substring(0, 80));
         } else {
-            log.trace("Data: " + x.length + " " + raw);
+            log.trace("Data: {} {}", x.length, raw);
         }
 
         dc.on();
@@ -131,10 +130,9 @@ public class St7789Driver implements Video {
         dc.off();
     }
 
-    @Override
     public void display(BufferedImage img) throws Exception {
 
-        log.debug("display: " + img.getType() + " " + img.getWidth() + " x " + img.getHeight());
+        log.debug("display: {} {} x {}",  img.getType(), img.getWidth(), img.getHeight());
 
         DataBuffer dataBuffer = img.getRaster().getDataBuffer();
 
@@ -203,11 +201,10 @@ public class St7789Driver implements Video {
             }
             showImage();
         } else {
-            log.warn("Unable to display BufferedImage DataBufferType: " + dataBuffer.getClass());
+            log.warn("Unable to display BufferedImage DataBufferType: {}", dataBuffer.getClass());
         }
     }
 
-    @Override
     public void fill(int ledColor) throws Exception {
 
         for (int x = 0; x < WIDTH; ++x) {
@@ -221,7 +218,6 @@ public class St7789Driver implements Video {
 
     }
 
-    @Override
     public void pixel(int x, int y, int ledColor) throws Exception {
 
         command(CASET); // Column addr set
