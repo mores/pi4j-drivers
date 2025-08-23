@@ -1,10 +1,11 @@
-package com.pi4j.driver.video.st7789;
+package com.pi4j.driver.display.st7789;
 
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBuffer;
-import java.awt.image.DataBufferByte;
-import java.awt.image.DataBufferInt;
 import java.io.IOException;
+
+import com.pi4j.driver.display.GraphicsDisplayDriver;
+import com.pi4j.driver.display.ColorFormat;
+import com.pi4j.driver.display.DisplayInfo;
+
 
 import com.pi4j.io.gpio.digital.DigitalOutput;
 import com.pi4j.io.spi.Spi;
@@ -12,9 +13,12 @@ import com.pi4j.io.spi.Spi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.pi4j.driver.LedColor;
+/*
+ * Tested on Adafruit 1.54" 240x240 Wide Angle TFT LCD Display with MicroSD - ST7789 with EYESPI Connector
+ * https://www.adafruit.com/product/3787
+ */
 
-public class St7789Driver {
+public class St7789Driver implements GraphicsDisplayDriver {
 
     private static Logger log = LoggerFactory.getLogger(St7789Driver.class);
 
@@ -130,95 +134,41 @@ public class St7789Driver {
         dc.off();
     }
 
-    public void display(BufferedImage img) throws Exception {
+    @Override
+    public DisplayInfo getDisplayInfo() {
 
-        log.debug("display: {} {} x {}",  img.getType(), img.getWidth(), img.getHeight());
+	    DisplayInfo displayInfo = new DisplayInfo() {
 
-        DataBuffer dataBuffer = img.getRaster().getDataBuffer();
+		    public int getWidth() {
+			    return WIDTH;
+		    }
+		    public int getHeight() {
+			    return HEIGHT;
+		    }
+		    public ColorFormat getColorFormat(){
+			    return ColorFormat.RGB_565;
+		    }
+	    };
 
-        if (dataBuffer instanceof DataBufferByte) {
-
-            byte[] pixels = ((DataBufferByte) dataBuffer).getData();
-
-            boolean hasAlphaChannel = img.getAlphaRaster() != null;
-            int pixelLength = 3;
-            if (hasAlphaChannel) {
-                pixelLength = 4;
-            }
-
-            for (int x = 0; x < img.getWidth(); x++) {
-                for (int y = 0; y < img.getHeight(); y++) {
-
-                    int pos = (y * pixelLength * img.getWidth()) + (x * pixelLength);
-
-                    int alpha = 0;
-                    int blue = 0;
-                    int green = 0;
-                    int red = 0;
-
-                    if (BufferedImage.TYPE_3BYTE_BGR == img.getType()) {
-                        blue = 0xff & pixels[pos++];
-                        green = 0xff & pixels[pos++];
-                        red = 0xff & pixels[pos++];
-                    } else if (BufferedImage.TYPE_BYTE_GRAY == img.getType()) {
-                        int grayPos = (y * img.getWidth()) + x;
-
-                        blue = 0xff & pixels[grayPos];
-                        green = 0xff & pixels[grayPos];
-                        red = 0xff & pixels[grayPos];
-
-                    } else {
-                        alpha = 0xff & pixels[pos++];
-
-                        blue = 0xff & pixels[pos++];
-                        green = 0xff & pixels[pos++];
-                        red = 0xff & pixels[pos++];
-                    }
-
-                    if (x < WIDTH && y < HEIGHT) {
-                        updateImage(x, y, red, green, blue);
-                    }
-                }
-            }
-            showImage();
-        } else if (dataBuffer instanceof DataBufferInt) {
-            int[] pixels = ((DataBufferInt) dataBuffer).getData();
-
-            for (int x = 0; x < img.getWidth(); x++) {
-                for (int y = 0; y < img.getHeight(); y++) {
-
-                    int i = x + y * img.getWidth();
-                    int alpha = (pixels[i] >> 24) & 0xff;
-                    int red = (pixels[i] >> 16) & 0xff;
-                    int green = (pixels[i] >> 8) & 0xff;
-                    int blue = (pixels[i] >> 0) & 0xff;
-
-                    if (x < WIDTH && y < HEIGHT) {
-                        updateImage(x, y, red, green, blue);
-                    }
-
-                }
-            }
-            showImage();
-        } else {
-            log.warn("Unable to display BufferedImage DataBufferType: {}", dataBuffer.getClass());
-        }
+	    return displayInfo;
     }
 
-    public void fill(int ledColor) throws Exception {
+    @Override
+    public void setPixels(int x, int y, int w, byte[] data, int offset, int length) throws Exception {
 
-        for (int x = 0; x < WIDTH; ++x) {
-            for (int y = 0; y < HEIGHT; ++y) {
-
-                updateImage(x, y, LedColor.getRedComponent(ledColor), LedColor.getGreenComponent(ledColor),
-                        LedColor.getBlueComponent(ledColor));
-            }
-        }
-        showImage();
-
+	int j = 0;
+	for (int i = 0; i < w; i++) {
+		int rgb565 = ((data[offset + 2*j] & 0xff) << 8 ) | (data[offset + 2*j + 1] & 0xff);
+		updateImage(x + i, y, rgb565);
+		j++;
+		if (j >= length) {
+			j = 0;
+		}
+	}
+	showImage();
     }
 
-    public void pixel(int x, int y, int ledColor) throws Exception {
+    public void setPixel(int x, int y, int rgb) throws Exception {
 
         command(CASET); // Column addr set
         byte[] cols = new byte[4];
@@ -236,9 +186,9 @@ public class St7789Driver {
         rows[3] = (byte) ((OFFSET + y) & 0xff);
         data(rows);
 
-        int red = LedColor.getRedComponent(ledColor);
-        int green = LedColor.getGreenComponent(ledColor);
-        int blue = LedColor.getBlueComponent(ledColor);
+        int red = (rgb >> 16) & 0xFF;
+        int green = (rgb >> 8) & 0xFF;
+        int blue = (rgb) & 0xFF;
 
         final int value = calculatePixelColor(red, green, blue);
 
@@ -249,15 +199,19 @@ public class St7789Driver {
         data(bytes);
     }
 
-    private void updateImage(int x, int y, int r, int g, int b) {
+    public void updateImage(int x, int y, int rgb) {
 
         if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) {
             throw new IllegalArgumentException("Invalid Pixel [" + x + "," + y + "]");
         }
 
+	int red = (rgb >> 16) & 0xFF;
+        int green = (rgb >> 8) & 0xFF;
+        int blue = (rgb) & 0xFF;
+
         final int index = ((y * WIDTH) + x) * 2;
 
-        final int value = calculatePixelColor(r, g, b);
+        final int value = calculatePixelColor(red, green, blue);
 
         image[index] = (byte) (value >> 8);
         image[index + 1] = (byte) value;
@@ -298,7 +252,7 @@ public class St7789Driver {
 
     }
 
-    private void showImage() throws IOException {
+    public void showImage() throws IOException {
 
         log.trace("window");
         command(CASET); // Column addr set
