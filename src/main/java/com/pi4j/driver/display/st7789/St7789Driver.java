@@ -156,16 +156,16 @@ public class St7789Driver implements GraphicsDisplayDriver {
     @Override
     public void setPixels(int x, int y, int w, byte[] data, int offset, int length) throws Exception {
 
-	int j = 0;
-	for (int i = 0; i < w; i++) {
-		int rgb565 = ((data[offset + 2*j] & 0xff) << 8 ) | (data[offset + 2*j + 1] & 0xff);
-		updateImage(x + i, y, rgb565);
-		j++;
-		if (j >= length) {
-			j = 0;
-		}
-	}
-	showImage();
+         int j = 0;
+         for (int i = 0; i < w; i++) {
+            int rgb565 = ((data[offset + 2*j] & 0xff) << 8 ) | (data[offset + 2*j + 1] & 0xff);
+            updateImage(x + i, y, rgb565);
+            j++;
+            if (j >= length) {
+                j = 0;
+            }
+        }
+        showImage();
     }
 
     public void setPixel(int x, int y, int rgb) throws Exception {
@@ -205,7 +205,7 @@ public class St7789Driver implements GraphicsDisplayDriver {
             throw new IllegalArgumentException("Invalid Pixel [" + x + "," + y + "]");
         }
 
-	int red = (rgb >> 16) & 0xFF;
+        int red = (rgb >> 16) & 0xFF;
         int green = (rgb >> 8) & 0xFF;
         int blue = (rgb) & 0xFF;
 
