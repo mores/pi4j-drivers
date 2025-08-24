@@ -24,12 +24,11 @@ public class St7789Driver implements GraphicsDisplayDriver {
 
     private static Logger log = LoggerFactory.getLogger(St7789Driver.class);
 
-    private final int BITS_PER_PIXEL = 16;
     private final int OFFSET = 80;
     private final int WIDTH = 240;
     private final int HEIGHT = 240;
 
-    private final byte[] image = new byte[WIDTH * HEIGHT * BITS_PER_PIXEL / 8];
+    private byte[] image = null;
 
     private static final int SWRESET = 0x01;
     private static final int SLPOUT = 0x11;
@@ -44,16 +43,30 @@ public class St7789Driver implements GraphicsDisplayDriver {
 
     private Spi spi;
     private DigitalOutput dc;
+    private ColorFormat colorFormat;
 
-    public St7789Driver(Spi spi, DigitalOutput dc) {
+    public St7789Driver(Spi spi, DigitalOutput dc, ColorFormat colorFormat) {
 
         this.spi = spi;
         this.dc = dc;
+        this.colorFormat = colorFormat;
 
         try {
             init();
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+
+        if( ColorFormat.RGB_444 == colorFormat ) {
+            image = new byte[WIDTH * HEIGHT * 12 / 8];
+            throw new RuntimeException( "Not yet implemented. Please consider making a pull request." );
+        }
+        else if( ColorFormat.RGB_565 == colorFormat ) {
+            image = new byte[WIDTH * HEIGHT * 16 / 8];
+        }
+        else if( ColorFormat.RGB_666 == colorFormat ) {
+            image = new byte[WIDTH * HEIGHT * 18 / 8];
+            throw new RuntimeException( "Not yet implemented. Please consider making a pull request." );
         }
     }
 
@@ -139,20 +152,20 @@ public class St7789Driver implements GraphicsDisplayDriver {
     @Override
     public DisplayInfo getDisplayInfo() {
 
-	    DisplayInfo displayInfo = new DisplayInfo() {
+        DisplayInfo displayInfo = new DisplayInfo() {
 
-		    public int getWidth() {
-			    return WIDTH;
-		    }
-		    public int getHeight() {
-			    return HEIGHT;
-		    }
-		    public List<ColorFormat> getColorFormat(){
-			    return Arrays.asList( ColorFormat.RGB_444, ColorFormat.RGB_565, ColorFormat.RGB_666 );
-		    }
-	    };
+            public int getWidth() {
+                return WIDTH;
+            }
+            public int getHeight() {
+                return HEIGHT;
+            }
+            public List<ColorFormat> getColorFormat(){
+                return Arrays.asList( ColorFormat.RGB_444, ColorFormat.RGB_565, ColorFormat.RGB_666 );
+            }
+        };
 
-	    return displayInfo;
+        return displayInfo;
     }
 
     @Override
