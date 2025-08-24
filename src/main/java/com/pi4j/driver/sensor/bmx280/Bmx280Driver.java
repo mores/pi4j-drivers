@@ -21,12 +21,19 @@ import com.pi4j.io.i2c.I2C;
 import com.pi4j.io.i2c.I2CRegisterDataReaderWriter;
 import com.pi4j.io.spi.Spi;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+
 /**
  * Driver for BME 280 and BMP 280 chips.
  * <p>
  * Datasheet: https://www.bosch-sensortec.com/media/boschsensortec/downloads/datasheets/bst-bme280-ds002.pdf
  */
 public class Bmx280Driver {
+
+    public final static int ADDRESS_BMP_280 = 0x077;
+    public final static int ADDRESS_BME_280_PRIMARY = 0x076;
+    public final static int ADDRESS_BME_280_SECONDARY = 0x077;
 
     private final static double[] BME_280_STANDBY_TIMES = {0.5, 62.5, 125, 250, 500, 1000, 2000, 4000};
     private final static double[] BMP_280_STANDBY_TIMES = {0.5, 62.5, 125, 250, 500, 1000, 10, 20};
@@ -35,8 +42,7 @@ public class Bmx280Driver {
     private final SensorType sensorType;
     private MeasurementMode measurementMode = MeasurementMode.SLEEPING;
 
-    private long busyUntil = 0;
-    private long measurementAvailableAt = 0;
+    private Instant busyUntil = Instant.now();
     private int standByTimeIndex = 0;
     private int filterCoefficientIndex = 0;
     private boolean spi3WireMode = false;
@@ -125,6 +131,10 @@ public class Bmx280Driver {
         digP9 = readRegisterS16(Bmp280Constants.REG_DIG_P9);
     }
 
+    public Instant getBusyUntil() {
+        return busyUntil;
+    }
+
     /**
      * If the mode doesn't match the current mode, send all settings to the chip and set the BMP/E280 measurement mode.
      */
@@ -134,7 +144,7 @@ public class Bmx280Driver {
         }
         this.measurementMode = mode;
 
-        materializeSleep(false);
+        materializeDelay(false);
 
         int config = (spi3WireMode ? 1 : 0)
                 | (filterCoefficientIndex << 2)
@@ -153,10 +163,10 @@ public class Bmx280Driver {
 
         registerAccess.writeRegister(Bmp280Constants.CTRL_MEAS, ctlReg);
 
-        busyUntil = System.currentTimeMillis() + (int) Math.ceil(getMeasurementTime());
+        delayMs((int) Math.ceil(getMeasurementTime()));
     }
 
-    /** Measurement time for the current sensor modes, as documented in section 9.1 */
+    /** Measurement time for the current sensor modes in milliseconds, as documented in section 9.1 */
     public float getMeasurementTime() {
         return (1.25f +
                 (temperatureMode == SensorMode.DISABLED ? 0 : (2.3f * (1 << temperatureMode.ordinal()) + 0.5f)) +
@@ -168,6 +178,7 @@ public class Bmx280Driver {
      * Sets the standby time in milliseconds, selecting the closest available value (depending on the sensor).
      */
     public double setStandbyTime(double ms) {
+        requireSleepingMode();
         double[] list = sensorType == SensorType.BMP280 ? BMP_280_STANDBY_TIMES : BME_280_STANDBY_TIMES;
         double bestDelta = Double.POSITIVE_INFINITY;
         for (int i = 0; i < list.length; i++) {
@@ -184,6 +195,7 @@ public class Bmx280Driver {
      * Sets the SPI 3 wire mode.
      */
     public void setSpi3WireMode(boolean enable) {
+        requireSleepingMode();
         spi3WireMode = enable;
     }
 
@@ -192,6 +204,7 @@ public class Bmx280Driver {
      * The best available match is returned.
      */
     public int setFilterCoefficient(int coefficient) {
+        requireSleepingMode();
         int index = (int) Math.round(Math.log(coefficient / 2.0)/Math.log(2));
         filterCoefficientIndex = index < 0 ? 0 : index > 8 ? 8 : index;
         return filterCoefficientIndex == 0 ? 0 : (2 >> filterCoefficientIndex);
@@ -199,16 +212,19 @@ public class Bmx280Driver {
 
     /** Disables or enables temperature measurement in the given oversampling mode */
     public void setTemperatureMode(SensorMode mode) {
+        requireSleepingMode();
         this.temperatureMode = mode;
     }
 
     /** Disables or enables pressure measurement in the given oversampling mode */
     public void setPressureMode(SensorMode mode) {
+        requireSleepingMode();
         this.pressureMode = mode;
     }
 
     /** Disables or enables humidity measurement in the given oversampling mode */
     public void setHumidityMode(SensorMode mode) {
+        requireSleepingMode();
         this.humidityMode = mode;
     }
 
@@ -221,12 +237,12 @@ public class Bmx280Driver {
      * <p>
      * Blocking can be avoided by setting FORCED or NORMAL mode ahead of time.
      */
-    public Measurement readMeasurements() {
+    public Measurement readMeasurement() {
         if (measurementMode == MeasurementMode.SLEEPING) {
             setMeasurementMode(MeasurementMode.FORCED);
         }
 
-        materializeSleep(true);
+        materializeDelay(true);
 
         registerAccess.readRegister(Bmp280Constants.PRESS_MSB, ioBuf, sensorType == SensorType.BME280 ? 8 : 6);
 
@@ -294,9 +310,9 @@ public class Bmx280Driver {
      * Write the reset command to the BMP280.
      */
     public void reset() {
-        materializeSleep(false);
+        materializeDelay(false);
         registerAccess.writeRegister(Bmp280Constants.RESET, Bmp280Constants.RESET_CMD);
-        busyUntil = System.currentTimeMillis() + 100;
+        delayMs(100);
     }
 
     public SensorType getSensorType() {
@@ -305,15 +321,30 @@ public class Bmx280Driver {
 
     // Internal methods
 
-    private void materializeSleep(boolean forMeasurement) {
-        long timeOut = forMeasurement ? Math.max(busyUntil, measurementAvailableAt) : busyUntil;
+    private void requireSleepingMode() {
+        // This is not strictly a device requirement but all the settings only get actually updated via a mode change,
+        // so the transition from sleeping to any of the measurement modes will make sure that the settings will be
+        // taken into account.
+        if (measurementMode != MeasurementMode.SLEEPING) {
+            throw new IllegalStateException("Settings can only be changed while the device is SLEEPING mode.");
+        }
+    }
+
+    private void delayMs(int delayMs) {
+        Instant target = Instant.now().plusMillis(delayMs);
+        if (target.isAfter(busyUntil)) {
+            busyUntil = target;
+        }
+    }
+
+    private void materializeDelay(boolean forMeasurement) {
         while (true) {
-            long now = System.currentTimeMillis();
-            if (now >= timeOut) {
-                return;
+            long remaining = Instant.now().until(busyUntil, ChronoUnit.MILLIS);
+            if (remaining < 0) {
+                break;
             }
             try {
-                Thread.sleep(timeOut - now);
+                Thread.sleep(remaining);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
