@@ -1,6 +1,8 @@
 package com.pi4j.driver.display.st7789;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 import com.pi4j.driver.display.GraphicsDisplayDriver;
 import com.pi4j.driver.display.ColorFormat;
@@ -145,8 +147,8 @@ public class St7789Driver implements GraphicsDisplayDriver {
 		    public int getHeight() {
 			    return HEIGHT;
 		    }
-		    public ColorFormat getColorFormat(){
-			    return ColorFormat.RGB_565;
+		    public List<ColorFormat> getColorFormat(){
+			    return Arrays.asList( ColorFormat.RGB_444, ColorFormat.RGB_565, ColorFormat.RGB_666 );
 		    }
 	    };
 
