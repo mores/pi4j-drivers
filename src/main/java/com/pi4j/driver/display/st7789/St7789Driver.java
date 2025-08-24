@@ -55,7 +55,7 @@ public class St7789Driver implements GraphicsDisplayDriver {
         }
     }
 
-    private void init() throws Exception {
+    private void init() throws java.io.IOException {
 
         command(SWRESET);
 
