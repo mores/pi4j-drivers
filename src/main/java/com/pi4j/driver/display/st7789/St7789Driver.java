@@ -1,13 +1,10 @@
 package com.pi4j.driver.display.st7789;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 
 import com.pi4j.driver.display.GraphicsDisplayDriver;
-import com.pi4j.driver.display.ColorFormat;
+import com.pi4j.driver.display.PixelFormat;
 import com.pi4j.driver.display.DisplayInfo;
-
 
 import com.pi4j.io.gpio.digital.DigitalOutput;
 import com.pi4j.io.spi.Spi;
@@ -28,7 +25,8 @@ public class St7789Driver implements GraphicsDisplayDriver {
     private final int WIDTH = 240;
     private final int HEIGHT = 240;
 
-    private byte[] image = null;
+    // 16 bit
+    private final byte[] image = new byte[WIDTH * HEIGHT * 16 / 8];
 
     private static final int SWRESET = 0x01;
     private static final int SLPOUT = 0x11;
@@ -41,32 +39,21 @@ public class St7789Driver implements GraphicsDisplayDriver {
     private static final int MADCTL = 0x36;
     private static final int COLMOD = 0x3A;
 
+    private static final int COLMOD_RGB_65K = 0x50;
+    private static final int COLMOD_CONTROL_16BIT = 0x05;
+
     private Spi spi;
     private DigitalOutput dc;
-    private ColorFormat colorFormat;
 
-    public St7789Driver(Spi spi, DigitalOutput dc, ColorFormat colorFormat) {
+    public St7789Driver(Spi spi, DigitalOutput dc) {
 
         this.spi = spi;
         this.dc = dc;
-        this.colorFormat = colorFormat;
 
         try {
             init();
         } catch (Exception e) {
             throw new RuntimeException(e);
-        }
-
-        if( ColorFormat.RGB_444 == colorFormat ) {
-            image = new byte[WIDTH * HEIGHT * 12 / 8];
-            throw new RuntimeException( "Not yet implemented. Please consider making a pull request." );
-        }
-        else if( ColorFormat.RGB_565 == colorFormat ) {
-            image = new byte[WIDTH * HEIGHT * 16 / 8];
-        }
-        else if( ColorFormat.RGB_666 == colorFormat ) {
-            image = new byte[WIDTH * HEIGHT * 18 / 8];
-            throw new RuntimeException( "Not yet implemented. Please consider making a pull request." );
         }
     }
 
@@ -77,7 +64,7 @@ public class St7789Driver implements GraphicsDisplayDriver {
         command(SLPOUT);
 
         command(COLMOD);
-        data(0x55);
+        data( COLMOD_RGB_65K | COLMOD_CONTROL_16BIT );
 
         command(MADCTL);
         data(0x08);
@@ -152,20 +139,7 @@ public class St7789Driver implements GraphicsDisplayDriver {
     @Override
     public DisplayInfo getDisplayInfo() {
 
-        DisplayInfo displayInfo = new DisplayInfo() {
-
-            public int getWidth() {
-                return WIDTH;
-            }
-            public int getHeight() {
-                return HEIGHT;
-            }
-            public List<ColorFormat> getColorFormat(){
-                return Arrays.asList( ColorFormat.RGB_444, ColorFormat.RGB_565, ColorFormat.RGB_666 );
-            }
-        };
-
-        return displayInfo;
+        return new DisplayInfo( WIDTH, HEIGHT, PixelFormat.RGB_565);
     }
 
     @Override
