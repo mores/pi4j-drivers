@@ -42,6 +42,9 @@ public class St7789Driver implements GraphicsDisplayDriver {
     private static final int COLMOD_RGB_65K = 0x50;
     private static final int COLMOD_CONTROL_16BIT = 0x05;
 
+    private static final int MADCTL_RGB_ORDER = 0x00;
+    private static final int MADCTL_BGR_ORDER = 0x08;
+
     private Spi spi;
     private DigitalOutput dc;
 
@@ -67,7 +70,7 @@ public class St7789Driver implements GraphicsDisplayDriver {
         data( COLMOD_RGB_65K | COLMOD_CONTROL_16BIT );
 
         command(MADCTL);
-        data(0x08);
+        data( MADCTL_BGR_ORDER );
 
         command(CASET); // Column addr set
         byte[] cols = new byte[4];
@@ -179,7 +182,7 @@ public class St7789Driver implements GraphicsDisplayDriver {
         int green = (rgb >> 8) & 0xFF;
         int blue = (rgb) & 0xFF;
 
-        final int value = calculatePixelColor(red, green, blue);
+        final int value = rgb888toRgb565(red, green, blue);
 
         command(RAMWR); // write to RAM
         byte[] bytes = new byte[2];
@@ -200,18 +203,21 @@ public class St7789Driver implements GraphicsDisplayDriver {
 
         final int index = ((y * WIDTH) + x) * 2;
 
-        final int value = calculatePixelColor(red, green, blue);
+        final int value = rgb888toRgb565(red, green, blue);
 
         image[index] = (byte) (value >> 8);
         image[index + 1] = (byte) value;
     }
 
-    private int calculatePixelColor(int r, int g, int b) {
+    private int rgb888toRgb565(int r, int g, int b) {
 
         if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) {
             throw new IllegalArgumentException("Invalid Colour (" + r + "," + g + "," + b + ")");
         }
 
+        // rounding correction when reducing from 8 bits per channel to fewer bits, so that colors don’t just get truncated but instead rounded
+        // for red and blue: if the 3rd least significant bit is set (0x04), it adds 4.
+        // For green: if the 2nd least significant bit is set (0x02), it adds 2 
         if ((r & 0x04) != 0) {
             r += 0x04;
 
