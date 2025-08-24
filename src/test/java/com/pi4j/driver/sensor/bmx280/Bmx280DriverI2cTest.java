@@ -18,19 +18,11 @@ public class Bmx280DriverI2cTest {
     static final int BUS = 1;
     static final int ADDRESS = Bmx280Driver.ADDRESS_BMP_280;
 
-    Context pi4j = Pi4J.newAutoContext();
-    I2C i2c = pi4j.create(I2CConfigBuilder.newInstance(pi4j).bus(BUS).device(ADDRESS));
-
-
+    static final Context pi4j = Pi4J.newAutoContext();
+    
     @Test
     public void testBasicMeasurementWorks() {
-        Bmx280Driver driver;
-        try {
-            driver = new Bmx280Driver(i2c);
-        } catch (RuntimeException e) {
-            Assumptions.abort("BMx280 not found on i2c bus " + BUS + " address " + ADDRESS);
-            return;
-        }
+        Bmx280Driver driver = createDriverOrAbort();
 
         Bmx280Driver.Measurement measurement = driver.readMeasurement();
 
@@ -39,5 +31,16 @@ public class Bmx280DriverI2cTest {
         assertTrue(measurement.getPressure() > 90_000);
         assertTrue(measurement.getPressure() < 110_000);
     }
+
+    Bmx280Driver createDriverOrAbort() {
+        try {
+            I2C i2c = pi4j.create(I2CConfigBuilder.newInstance(pi4j).bus(BUS).device(ADDRESS));
+            return new Bmx280Driver(i2c);
+        } catch (RuntimeException e) {
+            Assumptions.abort("BMx280 not found on i2c bus " + BUS + " address " + ADDRESS);
+            throw new RuntimeException(e);
+        }
+    }
+
 
 }
