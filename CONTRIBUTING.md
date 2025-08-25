@@ -5,7 +5,7 @@ Contributing to  Pi4J :: Drivers
 
 The purpose of the driver project is to provide an individual device-specific Java API for each covered device, abstracting from direct device communication (e.g via I2C or SPI).
 
-The drivers are grouped into packages such as `display`, `input, `actuator`, `sensor`,....
+The drivers are grouped into packages such as `display`, `input`, `actuator`, `sensor`,....
 
 Ideally, all drivers are well-documented, feature complete wrt core functionality, high-quality and fully isolated – without any additional dependencies besides the pi4j project  (see examples above). There are no shared interfaces or helpers between drivers.
 
