@@ -47,14 +47,14 @@ public class Bmx280Driver {
     private int filterCoefficientIndex = 0;
     private boolean spi3WireMode = false;
 
-    // Calibration values for temperature
+    /** Calibration values for temperature */
     private final int digT1, digT2, digT3;
-    // Calibration values for pressure
+    /** Calibration values for pressure */
     private final int digP1, digP2, digP3, digP4, digP5, digP6, digP7, digP8, digP9;
-    // Calibration values for humidity
+    /** Calibration values for humidity */
     private final int digH1, digH2, digH3, digH4, digH5, digH6;
 
-    // ByteBuffer doesn't seem to hel a lot given mixed big and little endian access.
+    // ByteBuffer doesn't seem to help a lot, given mixed big and little endian access.
     private final byte[] ioBuf = new byte[8];
 
     private SensorMode temperatureMode = SensorMode.ENABLED;
@@ -131,6 +131,10 @@ public class Bmx280Driver {
         digP9 = readRegisterS16(Bmp280Constants.REG_DIG_P9);
     }
 
+    /**
+     * Returns the instant when the chip will be ready for new commands after processing the last command.
+     * This can be used for scheduling purposes, avoiding forced sleep time when the next command is issued.
+     */
     public Instant getBusyUntil() {
         return busyUntil;
     }
@@ -163,7 +167,7 @@ public class Bmx280Driver {
 
         registerAccess.writeRegister(Bmp280Constants.CTRL_MEAS, ctlReg);
 
-        delayMs((int) Math.ceil(getMeasurementTime()));
+        setDelayMs((int) Math.ceil(getMeasurementTime()));
     }
 
     /** Measurement time for the current sensor modes in milliseconds, as documented in section 9.1 */
@@ -176,9 +180,11 @@ public class Bmx280Driver {
 
     /**
      * Sets the standby time in milliseconds, selecting the closest available value (depending on the sensor).
+     * The selected value is returned. The total interval time in CONTINUOUS measurement mode consists of the
+     * measurement time and the standby time.
      */
     public double setStandbyTime(double ms) {
-        requireSleepingMode();
+        assertSleepingModeForSettings();
         double[] list = sensorType == SensorType.BMP280 ? BMP_280_STANDBY_TIMES : BME_280_STANDBY_TIMES;
         double bestDelta = Double.POSITIVE_INFINITY;
         for (int i = 0; i < list.length; i++) {
@@ -195,7 +201,7 @@ public class Bmx280Driver {
      * Sets the SPI 3 wire mode.
      */
     public void setSpi3WireMode(boolean enable) {
-        requireSleepingMode();
+        assertSleepingModeForSettings();
         spi3WireMode = enable;
     }
 
@@ -204,7 +210,7 @@ public class Bmx280Driver {
      * The best available match is returned.
      */
     public int setFilterCoefficient(int coefficient) {
-        requireSleepingMode();
+        assertSleepingModeForSettings();
         int index = (int) Math.round(Math.log(coefficient / 2.0)/Math.log(2));
         filterCoefficientIndex = index < 0 ? 0 : index > 8 ? 8 : index;
         return filterCoefficientIndex == 0 ? 0 : (2 >> filterCoefficientIndex);
@@ -212,19 +218,19 @@ public class Bmx280Driver {
 
     /** Disables or enables temperature measurement in the given oversampling mode */
     public void setTemperatureMode(SensorMode mode) {
-        requireSleepingMode();
+        assertSleepingModeForSettings();
         this.temperatureMode = mode;
     }
 
     /** Disables or enables pressure measurement in the given oversampling mode */
     public void setPressureMode(SensorMode mode) {
-        requireSleepingMode();
+        assertSleepingModeForSettings();
         this.pressureMode = mode;
     }
 
     /** Disables or enables humidity measurement in the given oversampling mode */
     public void setHumidityMode(SensorMode mode) {
-        requireSleepingMode();
+        assertSleepingModeForSettings();
         this.humidityMode = mode;
     }
 
@@ -312,7 +318,7 @@ public class Bmx280Driver {
     public void reset() {
         materializeDelay(false);
         registerAccess.writeRegister(Bmp280Constants.RESET, Bmp280Constants.RESET_CMD);
-        delayMs(100);
+        setDelayMs(100);
     }
 
     public SensorType getSensorType() {
@@ -321,16 +327,22 @@ public class Bmx280Driver {
 
     // Internal methods
 
-    private void requireSleepingMode() {
-        // This is not strictly a device requirement but all the settings only get actually updated via a mode change,
-        // so the transition from sleeping to any of the measurement modes will make sure that the settings will be
-        // taken into account.
+    /**
+     * Asserts that the device is in sleeping mode for settings changes. This is not strictly a device requirement
+     * but all the settings only get actually updated via a mode change, so the transition from sleeping to any of the
+     * measurement modes will make sure that the settings will be taken into account.
+     */
+    private void assertSleepingModeForSettings() {
         if (measurementMode != MeasurementMode.SLEEPING) {
             throw new IllegalStateException("Settings can only be changed while the device is SLEEPING mode.");
         }
     }
 
-    private void delayMs(int delayMs) {
+    /**
+     * Sets a delay in ms that will be applied before the next instruction is sent to the chip, counting from now.
+     * The corresponding instant can be queried via getBusyUntil().
+     */
+    private void setDelayMs(int delayMs) {
         Instant target = Instant.now().plusMillis(delayMs);
         if (target.isAfter(busyUntil)) {
             busyUntil = target;
@@ -346,6 +358,7 @@ public class Bmx280Driver {
             try {
                 Thread.sleep(remaining);
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 throw new RuntimeException(e);
             }
         }
