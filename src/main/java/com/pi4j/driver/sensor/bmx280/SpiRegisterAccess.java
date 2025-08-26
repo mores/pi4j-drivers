@@ -24,20 +24,15 @@ import com.pi4j.io.spi.Spi;
  */
 class SpiRegisterAccess implements I2CRegisterDataReaderWriter {
     private final Spi spi;
-    private final DigitalOutput csb;
 
-    public SpiRegisterAccess(Spi spi, DigitalOutput csb) {
+    public SpiRegisterAccess(Spi spi) {
         this.spi = spi;
-        this.csb = csb;
     }
 
     @Override
     public int readRegister(int register) {
-        csb.low();
         spi.write((byte) (0b10000000 | register));
-        csb.high();
-        byte rval = this.spi.readByte();
-        return rval;
+        return spi.readByte();
     }
 
     // Not used in Bmx280Driver
@@ -48,32 +43,22 @@ class SpiRegisterAccess implements I2CRegisterDataReaderWriter {
 
     @Override
     public int readRegister(int register, byte[] data, int offset, int length) {
-        csb.low();
-        this.spi.write((byte) (0b10000000 | register));
-        int bytesRead = spi.read(data, offset, length);
-        csb.high();
-
-        return bytesRead;
+        spi.write((byte) (0b10000000 | register));
+        return spi.read(data, offset, length);
     }
 
 
     @Override
     public int writeRegister(int register, byte data) {
         // send read request to BMP chip via SPI channel
-        csb.low();
-        int result = spi.write((byte) (0b01111111 & register), data);
-        csb.high();
-        return result;
+        return spi.write((byte) (0b01111111 & register), data);
     }
 
 
     @Override
     public int writeRegister(int register, byte[] buffer, int i1, int i2) {
-        csb.low();
         spi.write((byte) (0b01111111 & register));
-        int bytesWritten = spi.write(buffer, i1, i2);
-        csb.high();
-        return bytesWritten;
+        return spi.write(buffer, i1, i2);
     }
 
     // Not used in Bmx280Driver

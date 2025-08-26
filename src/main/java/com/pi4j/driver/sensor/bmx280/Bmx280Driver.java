@@ -65,8 +65,8 @@ public class Bmx280Driver {
      * Creates a BMx280 SPI driver using the given Spi instance. The additional pin is used
      * to signal SPI access, as per the device SPI specification.
      */
-    public Bmx280Driver(Spi spi, DigitalOutput csb) {
-        this (new SpiRegisterAccess(spi, csb));
+    public Bmx280Driver(Spi spi) {
+        this (new SpiRegisterAccess(spi));
     }
 
     /**
