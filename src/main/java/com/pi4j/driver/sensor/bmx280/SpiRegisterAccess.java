@@ -15,7 +15,6 @@
  */
 package com.pi4j.driver.sensor.bmx280;
 
-import com.pi4j.io.gpio.digital.DigitalOutput;
 import com.pi4j.io.i2c.I2CRegisterDataReaderWriter;
 import com.pi4j.io.spi.Spi;
 
