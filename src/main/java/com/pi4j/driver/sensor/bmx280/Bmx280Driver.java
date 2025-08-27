@@ -16,7 +16,6 @@
 
 package com.pi4j.driver.sensor.bmx280;
 
-import com.pi4j.io.gpio.digital.DigitalOutput;
 import com.pi4j.io.i2c.I2C;
 import com.pi4j.io.i2c.I2CRegisterDataReaderWriter;
 import com.pi4j.io.spi.Spi;
@@ -65,8 +64,8 @@ public class Bmx280Driver {
      * Creates a BMx280 SPI driver using the given Spi instance. The additional pin is used
      * to signal SPI access, as per the device SPI specification.
      */
-    public Bmx280Driver(Spi spi, DigitalOutput csb) {
-        this (new SpiRegisterAccess(spi, csb));
+    public Bmx280Driver(Spi spi) {
+        this (new SpiRegisterAccess(spi));
     }
 
     /**
