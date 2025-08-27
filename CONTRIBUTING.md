@@ -62,6 +62,23 @@ It makes it impossible to subclass the driver in another dimension. For instance
 An abstract base driver mixes two “things” – the driver implementation and the IO abstraction – in one class. An IO abstraction is much easier to read and understand if it’s isolated in one interface.
 There are cases where different IO modes are “add-ons”, for instance displays typically have a parallel hardware  interface that is then mapped to serial using a separate dedicated IO chip. Here, composition might offer better re-usability between drivers and a separation between the device command logic and form of transmission.
 
+## Naming Things
+
+- For a "FOO 42" device, please use `com.pi4j.drivers.<category>.foo42` as the package name and `Foo42Driver`
+  as the class name for the driver.
+
+
+- For public driver specific enums and data classes with otherwise generic names (`Measurement`, `SensorType`), 
+  please use nested classes at the end of the file, so they can be conveniently referred to as `Foo42.Measurement` etc.
+  in client code. While classes aren't great as they make files longer and hence harder to read, in 
+  situations where multiple drivers are used, the alternatives would either require
+  - the full package name for disambiguation or 
+  - repeated explicit prefixes that always seem to have some tendency to become inconsistent.
+
+
+- Otherwise, generally stick to Java conventions. When porting drivers from other languages, please convert identifiers
+  accordingly to avoid that our linters get heart attacks and real issues get drowned in warnings for these.
+
 ## Pull Requests 
 
 We welcome driver contributions that match the structure outlined here and the project license.
