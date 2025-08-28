@@ -16,6 +16,7 @@
 
 package com.pi4j.driver.sensor.bmx280;
 
+import com.pi4j.io.gpio.digital.DigitalOutput;
 import com.pi4j.io.i2c.I2C;
 import com.pi4j.io.i2c.I2CRegisterDataReaderWriter;
 import com.pi4j.io.spi.Spi;
@@ -147,7 +148,7 @@ public class Bmx280Driver {
         }
         this.measurementMode = mode;
 
-        materializeDelay();
+        materializeDelay(false);
 
         int config = (spi3WireMode ? 1 : 0)
                 | (filterCoefficientIndex << 2)
@@ -247,7 +248,7 @@ public class Bmx280Driver {
             setMeasurementMode(MeasurementMode.FORCED);
         }
 
-        materializeDelay();
+        materializeDelay(true);
 
         registerAccess.readRegister(Bmp280Constants.PRESS_MSB, ioBuf, sensorType == SensorType.BME280 ? 8 : 6);
 
@@ -315,7 +316,7 @@ public class Bmx280Driver {
      * Write the reset command to the BMP280.
      */
     public void reset() {
-        materializeDelay();
+        materializeDelay(false);
         registerAccess.writeRegister(Bmp280Constants.RESET, Bmp280Constants.RESET_CMD);
         setDelayMs(100);
     }
@@ -348,7 +349,7 @@ public class Bmx280Driver {
         }
     }
 
-    private void materializeDelay() {
+    private void materializeDelay(boolean forMeasurement) {
         while (true) {
             long remaining = Instant.now().until(busyUntil, ChronoUnit.MILLIS);
             if (remaining < 0) {

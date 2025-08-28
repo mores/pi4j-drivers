@@ -3,6 +3,8 @@ package com.pi4j.driver.scd4x;
 import com.pi4j.Pi4J;
 import com.pi4j.context.Context;
 import com.pi4j.driver.sensor.scd4x.Scd4xDriver;
+import com.pi4j.driver.sensor.scd4x.Scd4xDriver.Measurement;
+import com.pi4j.driver.sensor.scd4x.Scd4xDriver.Mode;
 import com.pi4j.exception.Pi4JException;
 import com.pi4j.io.i2c.I2C;
 import com.pi4j.io.i2c.I2CConfigBuilder;
@@ -21,18 +23,18 @@ public class Scd4xDriverTest {
     @Test
     public void testBasicMeasurementWorks() {
         Scd4xDriver driver = createInitializedDriver();
-        
-        assertEquals(Scd4xDriver.Mode.IDLE, driver.getMode());
+
+        assertEquals(Mode.IDLE, driver.getMode());
 
         driver.startPeriodicMeasurement();
 
-        assertEquals(Scd4xDriver.Mode.PERIODIC_MEASUREMENT, driver.getMode());
+        assertEquals(Mode.PERIODIC_MEASUREMENT, driver.getMode());
 
-        Scd4xDriver.Measurement measurement = driver.readMeasurement();
+        Measurement measurement = driver.readMeasurement();
 
         driver.stopPeriodicMeasurement();
 
-        assertEquals(Scd4xDriver.Mode.IDLE, driver.getMode());
+        assertEquals(Mode.IDLE, driver.getMode());
 
         assertTrue(measurement.getTemperature() > 0);
         assertTrue(measurement.getTemperature() < 50);
