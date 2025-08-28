@@ -5,5 +5,5 @@ import java.io.IOException;
 public interface GraphicsDisplayDriver {
     DisplayInfo getDisplayInfo();
 
-    void setPixels(byte[] data) throws IOException;
+    void setPixels(int width, int height, byte[] data) throws IOException;
 }

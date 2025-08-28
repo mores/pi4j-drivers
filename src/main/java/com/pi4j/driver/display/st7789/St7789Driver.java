@@ -143,23 +143,23 @@ public class St7789Driver implements GraphicsDisplayDriver {
     }
 
     @Override
-    public void setPixels(byte[] data) throws IOException {
+    public void setPixels(int width, int height, byte[] data) throws IOException {
 
         log.trace("window");
         command(CASET); // Column addr set
         byte[] cols = new byte[4];
         cols[0] = 0x00;
         cols[1] = 0x00;
-        cols[2] = (byte) (WIDTH - 1 >> 8);
-        cols[3] = (byte) (WIDTH - 1 & 0xff);
+        cols[2] = (byte) (width - 1 >> 8);
+        cols[3] = (byte) (width - 1 & 0xff);
         data(cols);
 
         command(RASET); // Row addr set
         byte[] rows = new byte[4];
         rows[0] = 0x00;
         rows[1] = 0x50;
-        rows[2] = (byte) ((OFFSET + HEIGHT - 1) >> 8);
-        rows[3] = (byte) ((OFFSET + HEIGHT - 1) & 0xff);
+        rows[2] = (byte) ((OFFSET + height - 1) >> 8);
+        rows[3] = (byte) ((OFFSET + height - 1) & 0xff);
         data(rows);
 
         command(RAMWR); // write to RAM
