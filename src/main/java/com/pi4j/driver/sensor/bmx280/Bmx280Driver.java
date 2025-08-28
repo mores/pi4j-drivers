@@ -147,7 +147,7 @@ public class Bmx280Driver {
         }
         this.measurementMode = mode;
 
-        materializeDelay(false);
+        materializeDelay();
 
         int config = (spi3WireMode ? 1 : 0)
                 | (filterCoefficientIndex << 2)
@@ -247,7 +247,7 @@ public class Bmx280Driver {
             setMeasurementMode(MeasurementMode.FORCED);
         }
 
-        materializeDelay(true);
+        materializeDelay();
 
         registerAccess.readRegister(Bmp280Constants.PRESS_MSB, ioBuf, sensorType == SensorType.BME280 ? 8 : 6);
 
@@ -315,7 +315,7 @@ public class Bmx280Driver {
      * Write the reset command to the BMP280.
      */
     public void reset() {
-        materializeDelay(false);
+        materializeDelay();
         registerAccess.writeRegister(Bmp280Constants.RESET, Bmp280Constants.RESET_CMD);
         setDelayMs(100);
     }
@@ -348,7 +348,7 @@ public class Bmx280Driver {
         }
     }
 
-    private void materializeDelay(boolean forMeasurement) {
+    private void materializeDelay() {
         while (true) {
             long remaining = Instant.now().until(busyUntil, ChronoUnit.MILLIS);
             if (remaining < 0) {
