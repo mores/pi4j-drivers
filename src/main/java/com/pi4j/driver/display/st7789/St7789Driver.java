@@ -21,6 +21,8 @@ public class St7789Driver implements GraphicsDisplayDriver {
 
     private static Logger log = LoggerFactory.getLogger(St7789Driver.class);
 
+    // This chip controls 240x320
+    // An offset of 80 allows it to control 240x240
     private final int OFFSET = 80;
     private final int WIDTH = 240;
     private final int HEIGHT = 240;
@@ -143,23 +145,23 @@ public class St7789Driver implements GraphicsDisplayDriver {
     }
 
     @Override
-    public void setPixels(int width, int height, byte[] data) throws IOException {
+    public void setPixels(int x, int y, int width, int height, byte[] data) throws IOException {
 
-        log.trace("window");
+        log.trace("setPixels");
         command(CASET); // Column addr set
         byte[] cols = new byte[4];
-        cols[0] = 0x00;
-        cols[1] = 0x00;
-        cols[2] = (byte) (width - 1 >> 8);
-        cols[3] = (byte) (width - 1 & 0xff);
+        cols[0] = (byte) (x >> 8);
+        cols[1] = (byte) (x & 0xFF);
+        cols[2] = (byte) (x + width - 1 >> 8);
+        cols[3] = (byte) (x + width - 1 & 0xff);
         data(cols);
 
         command(RASET); // Row addr set
         byte[] rows = new byte[4];
-        rows[0] = 0x00;
-        rows[1] = 0x50;
-        rows[2] = (byte) ((OFFSET + height - 1) >> 8);
-        rows[3] = (byte) ((OFFSET + height - 1) & 0xff);
+        rows[0] = (byte) (OFFSET + y >> 8);
+        rows[1] = (byte) (OFFSET + y & 0xFF);
+        rows[2] = (byte) ((OFFSET + y + height - 1) >> 8);
+        rows[3] = (byte) ((OFFSET + y + height - 1) & 0xff);
         data(rows);
 
         command(RAMWR); // write to RAM

@@ -1,6 +1,7 @@
 package com.pi4j.driver.display;
 
 public class DisplayInfo {
+
     private final int width;
     private final int height;
     private PixelFormat pixelFormat;
