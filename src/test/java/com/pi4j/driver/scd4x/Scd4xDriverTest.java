@@ -20,10 +20,8 @@ public class Scd4xDriverTest {
 
     @Test
     public void testBasicMeasurementWorks() {
-        Scd4xDriver driver = createDriver();
-
-        driver.safeInit();
-
+        Scd4xDriver driver = createInitializedDriver();
+        
         assertEquals(Scd4xDriver.Mode.IDLE, driver.getMode());
 
         driver.startPeriodicMeasurement();
@@ -45,10 +43,12 @@ public class Scd4xDriverTest {
     }
 
 
-    Scd4xDriver createDriver() {
+    Scd4xDriver createInitializedDriver() {
         try {
             I2C i2c = pi4j.create(I2CConfigBuilder.newInstance(pi4j).bus(BUS).device(Scd4xDriver.I2C_ADDRESS));
-            return new Scd4xDriver(i2c);
+            Scd4xDriver driver = new Scd4xDriver(i2c);
+            driver.safeInit();
+            return driver;
         } catch (Pi4JException e) {
             Assumptions.abort("SCD 4x not found on i2c bus " + BUS + " address " + Scd4xDriver.I2C_ADDRESS);
             throw new RuntimeException(e);
