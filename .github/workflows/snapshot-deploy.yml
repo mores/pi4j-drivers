@@ -2,7 +2,7 @@ name: Build snapshot and push to Maven
 
 on:
   push:
-    #branches: [ main ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
