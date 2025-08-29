@@ -39,6 +39,7 @@ public class St7789Driver implements GraphicsDisplayDriver {
     private static final int COLMOD = 0x3A;
 
     private static final int COLMOD_RGB_65K = 0x50;
+    private static final int COLMOD_CONTROL_12BIT = 0x03;
     private static final int COLMOD_CONTROL_16BIT = 0x05;
 
     private static final int MADCTL_RGB_ORDER = 0x00;
@@ -46,11 +47,13 @@ public class St7789Driver implements GraphicsDisplayDriver {
 
     private Spi spi;
     private DigitalOutput dc;
+    private PixelFormat pixelFormat;
 
-    public St7789Driver(Spi spi, DigitalOutput dc) {
+    public St7789Driver(Spi spi, DigitalOutput dc, PixelFormat pixelFormat) {
 
         this.spi = spi;
         this.dc = dc;
+        this.pixelFormat = pixelFormat;
 
         try {
             init();
@@ -59,14 +62,19 @@ public class St7789Driver implements GraphicsDisplayDriver {
         }
     }
 
-    private void init() throws java.io.IOException {
+    private void init() throws java.io.IOException, InterruptedException {
 
         command(SWRESET);
+        Thread.sleep(200);
 
         command(SLPOUT);
 
         command(COLMOD);
-        data(COLMOD_RGB_65K | COLMOD_CONTROL_16BIT);
+        if (PixelFormat.RGB_444 == pixelFormat) {
+            data(COLMOD_RGB_65K | COLMOD_CONTROL_12BIT);
+        } else {
+            data(COLMOD_RGB_65K | COLMOD_CONTROL_16BIT);
+        }
 
         command(MADCTL);
         data(MADCTL_BGR_ORDER);
@@ -141,13 +149,13 @@ public class St7789Driver implements GraphicsDisplayDriver {
     @Override
     public DisplayInfo getDisplayInfo() {
 
-        return new DisplayInfo(WIDTH, HEIGHT, PixelFormat.RGB_565);
+        return new DisplayInfo(WIDTH, HEIGHT, pixelFormat);
     }
 
     @Override
     public void setPixels(int x, int y, int width, int height, byte[] data) throws IOException {
 
-        log.trace("setPixels");
+        log.trace("setPixels {}", data.length);
         command(CASET); // Column addr set
         byte[] cols = new byte[4];
         cols[0] = (byte) (x >> 8);

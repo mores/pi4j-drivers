@@ -10,7 +10,7 @@ public class BaseGraphicsDisplayComponent {
 
     public void fillRect(int x, int y, int width, int height, int rgb888) throws java.io.IOException {
 
-        byte[] data = new byte[width * height * 16 / 8];
+        int[] values = new int[width * height];
 
         for (int row = 0; row < width; row++) {
             for (int col = 0; col < height; col++) {
@@ -19,16 +19,54 @@ public class BaseGraphicsDisplayComponent {
                 int green = (rgb888 >> 8) & 0xFF;
                 int blue = (rgb888) & 0xFF;
 
-                final int index = ((col * width) + row) * 2;
+                final int index = ((col * width) + row);
 
-                final int value = rgb888toRgb565(red, green, blue);
-
-                data[index] = (byte) (value >> 8);
-                data[index + 1] = (byte) value;
+                if (PixelFormat.RGB_444 == driver.getDisplayInfo().getPixelFormat()) {
+                    values[index] = rgb888toRgb444(red, green, blue);
+                } else if (PixelFormat.RGB_565 == driver.getDisplayInfo().getPixelFormat()) {
+                    values[index] = rgb888toRgb565(red, green, blue);
+                }
             }
         }
 
-        driver.setPixels(x, y, width, height, data);
+        if (PixelFormat.RGB_444 == driver.getDisplayInfo().getPixelFormat()) {
+
+            byte[] data = pack12(values);
+            driver.setPixels(x, y, width, height, data);
+
+        } else if (PixelFormat.RGB_565 == driver.getDisplayInfo().getPixelFormat()) {
+
+            byte[] data = new byte[width * height * 16 / 8];
+
+            for (int index = 0; index < values.length; index++) {
+                data[2 * index] = (byte) (values[index] >> 8);
+                data[2 * index + 1] = (byte) values[index];
+            }
+
+            driver.setPixels(x, y, width, height, data);
+        }
+    }
+
+    public static byte[] pack12(int[] values) {
+        int n = values.length;
+        byte[] packed = new byte[(n * 12 + 7) / 8];
+
+        int out = 0;
+        for (int i = 0; i < n; i += 2) {
+            int v1 = values[i] & 0xFFF; // 12 bits
+            int v2 = (i + 1 < n) ? values[i + 1] & 0xFFF : 0;
+
+            // Layout (24 bits):
+            // byte0 = v1[11:4]
+            // byte1 = v1[3:0] << 4 | v2[11:8]
+            // byte2 = v2[7:0]
+
+            packed[out++] = (byte) (v1 >>> 4);
+            packed[out++] = (byte) ((v1 & 0xF) << 4 | (v2 >>> 8));
+            packed[out++] = (byte) (v2 & 0xFF);
+        }
+
+        return packed;
     }
 
     private int rgb888toRgb565(int r, int g, int b) {
@@ -70,4 +108,20 @@ public class BaseGraphicsDisplayComponent {
 
     }
 
+    /*
+     * @param r red (0-255)
+     * @param g green (0-255)
+     * @param b blue (0-255)
+     * @return 12-bit packed RGB444 value
+     */
+    private int rgb888toRgb444(int r, int g, int b) {
+
+        // Reduce 8-bit channel to 4-bit channel (0-255 -> 0-15)
+        int r4 = (r >> 4) & 0xF;
+        int g4 = (g >> 4) & 0xF;
+        int b4 = (b >> 4) & 0xF;
+
+        // Pack into 12 bits: RRRR GGGG BBBB
+        return (r4 << 8) | (g4 << 4) | b4;
+    }
 }
