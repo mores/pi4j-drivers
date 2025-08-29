@@ -8,16 +8,16 @@ public class BaseGraphicsDisplayComponent {
         this.driver = driver;
     }
 
-    public void fill(int x, int y, int width, int height, java.awt.Color color) throws java.io.IOException {
+    public void fillRect(int x, int y, int width, int height, int rgb888) throws java.io.IOException {
 
         byte[] data = new byte[width * height * 16 / 8];
 
         for (int row = 0; row < width; row++) {
             for (int col = 0; col < height; col++) {
 
-                int red = (color.getRGB() >> 16) & 0xFF;
-                int green = (color.getRGB() >> 8) & 0xFF;
-                int blue = (color.getRGB()) & 0xFF;
+                int red = (rgb888 >> 16) & 0xFF;
+                int green = (rgb888 >> 8) & 0xFF;
+                int blue = (rgb888) & 0xFF;
 
                 final int index = ((col * width) + row) * 2;
 
