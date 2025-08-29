@@ -43,7 +43,7 @@ public class Scd4xDriver {
      * Starts periodic measurement at an interval of 5 seconds.
      */
     public void startPeriodicMeasurement() {
-        sendConfigurationCommand(0x21b1, 0);
+        sendConfigurationCommand(CommandCodes.START_PERIODIC_MEASUREMENT, 0);
         mode = Mode.PERIODIC_MEASUREMENT;
     }
 
@@ -73,11 +73,12 @@ public class Scd4xDriver {
             try {
                 Thread.sleep(expectedInterval / 32);
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 throw new RuntimeException(e);
             }
         }
 
-        sendCommand(0xec05, 1);
+        sendCommand(CommandCodes.READ_MEASUREMENT, 1);
         i2c.read(ioBuf.array(), 3 * 3);
         // i2c.read(buf, 0, 3*3);
         int co2 = u16(ioBuf.getShort(0));
@@ -98,7 +99,7 @@ public class Scd4xDriver {
      * Stops periodic measurements to save power and goes back to IDLE mode.
      */
     public void stopPeriodicMeasurement() {
-        sendCommand(0x3f86, 500);
+        sendCommand(CommandCodes.STOP_PERIODIC_MEASUREMENT, 500);
         mode = Mode.IDLE;
     }
 
@@ -126,14 +127,14 @@ public class Scd4xDriver {
      * value, the persistSetting command is required.
      */
     public void setTemperatureOffset(double offsetC) {
-        sendConfigurationCommand(0x241d, 1, (int) (offsetC * 65536.0 / 175.0));
+        sendConfigurationCommand(CommandCodes.SET_TEMPERATURE_OFFSET, 1, (int) (offsetC * 65536.0 / 175.0));
     }
 
     /**
      * Returns the current temperature offset in °C.
      */
     public double getTemperatureOffset() {
-        sendConfigurationCommand(0x2318, 1);
+        sendConfigurationCommand(CommandCodes.GET_TEMPERATURE_OFFSET, 1);
         return readValue() * 175.0 / 65536.0;
     }
 
@@ -148,14 +149,14 @@ public class Scd4xDriver {
      * The input value will be capped to the valid range from 0 to 3000m.
      */
     public void setSensorAltitude(int altitudeMasl) {
-        sendConfigurationCommand(0x2427, 1, Math.max(0, Math.min(altitudeMasl, 3000)));
+        sendConfigurationCommand(CommandCodes.SET_SENSOR_ALTITUDE, 1, Math.max(0, Math.min(altitudeMasl, 3000)));
     }
 
     /**
      * Returns the sensor altitude as set in m.
      */
     public int getSensorAltitude() {
-        sendConfigurationCommand(0x2322, 1);
+        sendConfigurationCommand(CommandCodes.GET_SENSOR_ALTITUDE, 1);
         return readValue();
     }
 
@@ -165,7 +166,7 @@ public class Scd4xDriver {
      * this value can be written and read when the device is in a measurement mode.
      */
     public void setAmbientPressure(int pressurePa) {
-        sendCommand(0xe000, 1, Math.max(70_000, Math.min(pressurePa, 120_000)) / 100);
+        sendCommand(CommandCodes.SET_AMBIENT_PRESSURE, 1, Math.max(70_000, Math.min(pressurePa, 120_000)) / 100);
     }
 
     // Chapter 3.7: Field Calibration
@@ -175,7 +176,7 @@ public class Scd4xDriver {
      * successful forced recalibration with a given reference value.
      */
     public int performForcedRecalibration(int referenceCo2ppm) {
-        sendConfigurationCommand(0x362f, 400, referenceCo2ppm);
+        sendConfigurationCommand(CommandCodes.PERFORM_FORCED_RECALIBRATION, 400, referenceCo2ppm);
         int result = readValue();
         if (result == 0xffff) {
             throw new IllegalStateException("Recalibration has failed.");
@@ -187,14 +188,14 @@ public class Scd4xDriver {
      * Enables or disables automatic self calibration. Enabled self calibration is the default.
      */
     public void setAutomaticSelfCalibrationEnabled(boolean enabled) {
-        sendConfigurationCommand(0x2416, 1, enabled ? 1 : 0);
+        sendConfigurationCommand(CommandCodes.SET_AUTOMATIC_SELF_CALIBRATION_ENABLED, 1, enabled ? 1 : 0);
     }
 
     /**
      * Returns whether automatic self calibration is currently enabled.
      */
     public boolean getAutomaticSelfCalibrationEnabled() {
-        sendConfigurationCommand(0x2313, 1);
+        sendConfigurationCommand(CommandCodes.GET_AUTOMATIC_SELF_CALIBRATION_ENABLED, 1);
         return readValue() != 0;
     }
 
@@ -205,7 +206,7 @@ public class Scd4xDriver {
      * startPeriodicMeasurement())
      */
     public void startLowPowerPeriodicMeasurement() {
-        sendConfigurationCommand(0x21ac, 0);
+        sendConfigurationCommand(CommandCodes.START_LOW_POWER_PERIODIC_MEASUREMENT, 0);
         mode = Mode.LOW_POWER_PERIODIC_MEASUREMENT;
     }
 
@@ -217,7 +218,7 @@ public class Scd4xDriver {
             throw new IllegalStateException("Measurements can't be performed in " + mode + " mode.");
         }
 
-        sendCommand(0xe4b8, 1);
+        sendCommand(CommandCodes.GET_DATA_READY_STATUS, 1);
         int readyState = readValue();
         return (readyState & 0b011111111111) != 0;
     }
@@ -236,7 +237,7 @@ public class Scd4xDriver {
      * Returns the 48 bit serial number of the device as a long value.
      */
     public long getSerialNumber() {
-        sendConfigurationCommand(0x3682, 1);
+        sendConfigurationCommand(CommandCodes.GET_SERIAL_NUMBER, 1);
         materializeDelay();
         i2c.read(ioBuf.array(), 0, 3 * 3);
         return (((long) u16(ioBuf.getShort(0))) << 32)
@@ -249,7 +250,7 @@ public class Scd4xDriver {
      * Note that this command takes a very long time (10s)
      */
     public int performSelfTest() {
-        sendConfigurationCommand(0x3639, 10000);
+        sendConfigurationCommand(CommandCodes.PERFORM_SELF_TEST, 10000);
         return readValue();
     }
 
@@ -257,33 +258,35 @@ public class Scd4xDriver {
      * Resets all configuration settings stored in the EEPROM and erases the FRC and ASC algorithm history.
      */
     public void performFactoryReset() {
-        sendConfigurationCommand(0x3632, 1200);
+        sendConfigurationCommand(CommandCodes.PERFORM_FACTORY_RESET, 1200);
     }
 
     /**
      * Resets all volatile configuration settings (similar to a power cycle).
      */
     public void reInit() {
-        sendConfigurationCommand(0x3646, 30);
+        sendConfigurationCommand(CommandCodes.RE_INIT, 30);
     }
 
     // Chapter 3.10: Low power single shot (SCD41)
 
     /**
-     * Requests a single shot measurement; only available for the SCD41 sensor.
+     * Requests a single shot measurement; <strong>only available for the SCD41 sensor.</strong>
      * For details, please refer to section 3.10 of the device specification.
      */
     public void measureSingleShot() {
-        sendCommand(0x29d, 5000);
+        sendCommand(CommandCodes.MEASURE_SINGLE_SHOT, 5000);
         mode = Mode.SINGLE_SHOT_MEASUREMENT;
     }
 
     /**
      * Requests a single shot measurement limited to humidity and temperature;
-     * 0 will be returned for the co2 value. This command is only available for the SCD41 sensor.
+     * 0 will be returned for the co2 value.
+     * <p>
+     * <strong>NOTE</strong>: This command is only available for the SCD41 sensor.
      */
     public void measureSingleShotRhtOnly() {
-        sendCommand(0x2196, 50);
+        sendCommand(CommandCodes.MEASURE_SINGLE_SHOT_RHT_ONLY, 50);
         mode = Mode.SINGLE_SHOT_MEASUREMENT;
     }
 
@@ -291,7 +294,7 @@ public class Scd4xDriver {
      * Put the sensor from IDLE to SLEEP mode in order ot save power.
      */
     public void powerDown() {
-        sendConfigurationCommand(0x36e0, 1);
+        sendConfigurationCommand(CommandCodes.POWER_DOWN, 1);
         mode = Mode.SLEEP;
     }
 
@@ -299,7 +302,7 @@ public class Scd4xDriver {
      * Wake the device up from SLEEP mode and put it back into IDLE mode.
      */
     public void wakeUp() {
-        sendCommand(0x36f6, 30);
+        sendCommand(CommandCodes.WAKE_UP, 30);
         mode = Mode.IDLE;
     }
 
@@ -309,14 +312,14 @@ public class Scd4xDriver {
      * for details.
      */
     public void setAutomaticSelfCalibrationInitialPeriod(int initialPeriodHours) {
-        sendConfigurationCommand(0x2445, 1, Math.max(0, Math.min(initialPeriodHours, 0xffff)) & 0xfffc);
+        sendConfigurationCommand(CommandCodes.SET_AUTOMATIC_SELF_CALIBRATION_INITIAL_PERIOD, 1, Math.max(0, Math.min(initialPeriodHours, 0xffff)) & 0xfffc);
     }
 
     /**
      * Returns the current initial ASC period in hours.
      */
     public int getAutomaticSelfCalibrationInitialPeriod() {
-        sendConfigurationCommand(0x2340, 1);
+        sendConfigurationCommand(CommandCodes.GET_AUTOMATIC_SELF_CALIBRATION_INITIAL_PERIOD, 1);
         return readValue();
     }
 
@@ -326,14 +329,14 @@ public class Scd4xDriver {
      * for details.
      */
     public void setAutomaticSelfCalibrationStandardPeriod(int standardPeriodHours) {
-        sendConfigurationCommand(0x244e, 1, Math.max(0, Math.min(standardPeriodHours, 0xffff)) & 0xfffc);
+        sendConfigurationCommand(CommandCodes.SET_AUTOMATIC_SELF_CALIBRATION_STANDARD_PERIOD, 1, Math.max(0, Math.min(standardPeriodHours, 0xffff)) & 0xfffc);
     }
 
     /**
      * Returns the current ASC standard period in hours.
      */
     public int getAutomaticSelfCalibrationStandardPeriod() {
-        sendConfigurationCommand(0x234b, 1);
+        sendConfigurationCommand(CommandCodes.GET_AUTOMATIC_SELF_CALIBRATION_STANDARD_PERIOD, 1);
         return readValue();
     }
 
@@ -419,6 +422,7 @@ public class Scd4xDriver {
             ioBuf.put(crc(ioBuf, p0, 2));
         }
 
+        // .array() as Pi4j does sketchy stuff when handing in byte buffers directly
         i2c.write(ioBuf.array(), ioBuf.position());
         ioBuf.clear();
 
@@ -438,6 +442,7 @@ public class Scd4xDriver {
 
     private int readValue() {
         materializeDelay();
+        // .array() as Pi4j does sketchy stuff when handing in byte buffers directly
         i2c.read(ioBuf.array(), 3);
         return u16(ioBuf.getShort(0));
     }
