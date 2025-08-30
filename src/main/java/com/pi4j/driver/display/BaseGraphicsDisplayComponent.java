@@ -12,20 +12,23 @@ public class BaseGraphicsDisplayComponent {
 
         int[] values = new int[width * height];
 
+        int red = (rgb888 >> 16) & 0xFF;
+        int green = (rgb888 >> 8) & 0xFF;
+        int blue = (rgb888) & 0xFF;
+
+        int adjustedForColorDepth = 0;
+
+        if (PixelFormat.RGB_444 == driver.getDisplayInfo().getPixelFormat()) {
+            adjustedForColorDepth = rgb888toRgb444(red, green, blue);
+        } else if (PixelFormat.RGB_565 == driver.getDisplayInfo().getPixelFormat()) {
+            adjustedForColorDepth = rgb888toRgb565(red, green, blue);
+        }
+
         for (int row = 0; row < width; row++) {
             for (int col = 0; col < height; col++) {
 
-                int red = (rgb888 >> 16) & 0xFF;
-                int green = (rgb888 >> 8) & 0xFF;
-                int blue = (rgb888) & 0xFF;
-
                 final int index = ((col * width) + row);
-
-                if (PixelFormat.RGB_444 == driver.getDisplayInfo().getPixelFormat()) {
-                    values[index] = rgb888toRgb444(red, green, blue);
-                } else if (PixelFormat.RGB_565 == driver.getDisplayInfo().getPixelFormat()) {
-                    values[index] = rgb888toRgb565(red, green, blue);
-                }
+                values[index] = adjustedForColorDepth;
             }
         }
 
@@ -47,7 +50,7 @@ public class BaseGraphicsDisplayComponent {
         }
     }
 
-    public static byte[] pack12(int[] values) {
+    private byte[] pack12(int[] values) {
         int n = values.length;
         byte[] packed = new byte[(n * 12 + 7) / 8];
 
