@@ -1,4 +1,4 @@
-package com.pi4j.driver.scd4x;
+package com.pi4j.driver.sensor.scd4x;
 
 import com.pi4j.Pi4J;
 import com.pi4j.context.Context;
