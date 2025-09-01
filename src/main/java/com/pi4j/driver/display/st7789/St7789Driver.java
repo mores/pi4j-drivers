@@ -1,7 +1,5 @@
 package com.pi4j.driver.display.st7789;
 
-import java.io.IOException;
-
 import com.pi4j.driver.display.GraphicsDisplayDriver;
 import com.pi4j.driver.display.PixelFormat;
 import com.pi4j.driver.display.DisplayInfo;
@@ -106,7 +104,7 @@ public class St7789Driver implements GraphicsDisplayDriver {
 
     }
 
-    private void command(int x) throws com.pi4j.io.exception.IOException, IOException {
+    private void command(int x) {
 
         if (x < 0 || x > 0xff) {
             throw new IllegalArgumentException("ST7789 bad command value " + x);
@@ -120,7 +118,7 @@ public class St7789Driver implements GraphicsDisplayDriver {
         spi.write(buffer);
     }
 
-    private void data(int x) throws IOException, com.pi4j.io.exception.IOException {
+    private void data(int x) {
 
         if (x < 0 || x > 0xff) {
             throw new IllegalArgumentException("ST7789 bad data value " + x);
@@ -132,7 +130,7 @@ public class St7789Driver implements GraphicsDisplayDriver {
         data(buffer);
     }
 
-    private void data(byte[] x) throws IOException, com.pi4j.io.exception.IOException {
+    private void data(byte[] x) {
 
         String raw = java.util.HexFormat.of().formatHex(x);
         if (raw.length() > 100) {
@@ -153,7 +151,7 @@ public class St7789Driver implements GraphicsDisplayDriver {
     }
 
     @Override
-    public void setPixels(int x, int y, int width, int height, byte[] data) throws IOException {
+    public void setPixels(int x, int y, int width, int height, byte[] data) {
 
         log.trace("setPixels {}", data.length);
         command(CASET); // Column addr set
