@@ -1,8 +1,8 @@
-package com.pi4j.driver.display.st7789;
+package com.pi4j.drivers.display.st7789;
 
-import com.pi4j.driver.display.GraphicsDisplayDriver;
-import com.pi4j.driver.display.PixelFormat;
-import com.pi4j.driver.display.DisplayInfo;
+import com.pi4j.drivers.display.GraphicsDisplayDriver;
+import com.pi4j.drivers.display.PixelFormat;
+import com.pi4j.drivers.display.DisplayInfo;
 
 import com.pi4j.io.gpio.digital.DigitalOutput;
 import com.pi4j.io.spi.Spi;

@@ -1,4 +1,4 @@
-package com.pi4j.driver.sensor.bmx280;
+package com.pi4j.drivers.sensor.bmx280;
 
 import com.pi4j.Pi4J;
 import com.pi4j.context.Context;

@@ -1,4 +1,4 @@
-package com.pi4j.driver.display;
+package com.pi4j.drivers.display;
 
 import java.awt.Color;
 import java.io.IOException;
@@ -8,9 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.pi4j.driver.display.DisplayInfo;
-import com.pi4j.driver.display.PixelFormat;
 
 public class BaseGraphicsDisplayComponentTest {
 
