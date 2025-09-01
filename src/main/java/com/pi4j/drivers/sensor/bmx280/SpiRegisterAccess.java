@@ -15,6 +15,7 @@
  */
 package com.pi4j.drivers.sensor.bmx280;
 
+import com.pi4j.io.gpio.digital.DigitalOutput;
 import com.pi4j.io.i2c.I2CRegisterDataReaderWriter;
 import com.pi4j.io.spi.Spi;
 
@@ -23,15 +24,20 @@ import com.pi4j.io.spi.Spi;
  */
 class SpiRegisterAccess implements I2CRegisterDataReaderWriter {
     private final Spi spi;
+    private final DigitalOutput csb;
 
-    public SpiRegisterAccess(Spi spi) {
+    SpiRegisterAccess(Spi spi, DigitalOutput csb) {
         this.spi = spi;
+        this.csb = csb;
     }
 
     @Override
     public int readRegister(int register) {
-        spi.write((byte) (0b10000000 | register));
-        return spi.readByte();
+        csb.low();
+        spi.write(register);
+        int result = spi.read() & 0xff;
+        csb.high();
+        return result;
     }
 
     // Not used in Bmx280Driver
@@ -42,22 +48,25 @@ class SpiRegisterAccess implements I2CRegisterDataReaderWriter {
 
     @Override
     public int readRegister(int register, byte[] data, int offset, int length) {
+        csb.low();
         spi.write((byte) (0b10000000 | register));
-        return spi.read(data, offset, length);
+        int result = spi.read(data, offset, length);
+        csb.high();
+        return result;
     }
-
 
     @Override
     public int writeRegister(int register, byte data) {
-        // send read request to BMP chip via SPI channel
-        return spi.write((byte) (0b01111111 & register), data);
+        csb.low();
+        int result = spi.write((byte) (0b01111111 & register), data);
+        csb.high();
+        return result;
     }
 
-
+    // Not used in Bmx280Driver
     @Override
     public int writeRegister(int register, byte[] buffer, int i1, int i2) {
-        spi.write((byte) (0b01111111 & register));
-        return spi.write(buffer, i1, i2);
+       throw new UnsupportedOperationException();
     }
 
     // Not used in Bmx280Driver

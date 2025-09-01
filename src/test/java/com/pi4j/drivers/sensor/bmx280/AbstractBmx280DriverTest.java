@@ -21,7 +21,5 @@ abstract class AbstractBmx280DriverTest {
         assertTrue(measurement.getPressure() < 110_000);
     }
 
-
     abstract Bmx280Driver createDriver();
-
 }

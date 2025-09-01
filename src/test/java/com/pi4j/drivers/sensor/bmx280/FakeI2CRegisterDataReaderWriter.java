@@ -46,6 +46,4 @@ public class FakeI2CRegisterDataReaderWriter implements I2CRegisterDataReaderWri
     public int writeRegister(byte[] register, byte[] data, int offset, int length) {
        throw new UnsupportedOperationException();
     }
-
-
 }
