@@ -1,4 +1,4 @@
-package com.pi4j.driver.display;
+package com.pi4j.drivers.display;
 
 public class BaseGraphicsDisplayComponent {
 

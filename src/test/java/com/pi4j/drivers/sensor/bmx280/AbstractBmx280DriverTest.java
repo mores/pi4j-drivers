@@ -1,10 +1,5 @@
-package com.pi4j.driver.sensor.bmx280;
+package com.pi4j.drivers.sensor.bmx280;
 
-import com.pi4j.Pi4J;
-import com.pi4j.context.Context;
-import com.pi4j.exception.Pi4JException;
-import com.pi4j.io.i2c.I2C;
-import com.pi4j.io.i2c.I2CConfigBuilder;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;

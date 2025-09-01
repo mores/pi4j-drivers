@@ -1,6 +1,5 @@
-package com.pi4j.driver.display;
+package com.pi4j.drivers.display;
 
-import java.io.IOException;
 import java.util.HexFormat;
 
 import org.slf4j.Logger;

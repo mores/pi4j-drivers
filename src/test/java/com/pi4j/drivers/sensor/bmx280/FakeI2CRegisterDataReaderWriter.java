@@ -1,4 +1,4 @@
-package com.pi4j.driver.sensor.bmx280;
+package com.pi4j.drivers.sensor.bmx280;
 
 import com.pi4j.io.i2c.I2CRegisterDataReaderWriter;
 
