@@ -12,10 +12,12 @@ public class DisplayInfo {
         this.pixelFormat = pixelFormat;
     }
 
+    /** The width of the display in pixel. */
     public int getWidth() {
         return width;
-    } // In pixel
+    }
 
+    /** The height of the display in pixel. */
     public int getHeight() {
         return height;
     }
