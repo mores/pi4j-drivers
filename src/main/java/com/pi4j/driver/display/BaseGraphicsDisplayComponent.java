@@ -50,7 +50,7 @@ public class BaseGraphicsDisplayComponent {
         }
     }
 
-    private byte[] pack12(int[] values) {
+    protected byte[] pack12(int[] values) {
         int n = values.length;
         byte[] packed = new byte[(n * 12 + 7) / 8];
 
@@ -72,7 +72,7 @@ public class BaseGraphicsDisplayComponent {
         return packed;
     }
 
-    private int rgb888toRgb565(int r, int g, int b) {
+    protected int rgb888toRgb565(int r, int g, int b) {
 
         if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) {
             throw new IllegalArgumentException("Invalid Colour (" + r + "," + g + "," + b + ")");
@@ -117,7 +117,7 @@ public class BaseGraphicsDisplayComponent {
      * @param b blue (0-255)
      * @return 12-bit packed RGB444 value
      */
-    private int rgb888toRgb444(int r, int g, int b) {
+    protected int rgb888toRgb444(int r, int g, int b) {
 
         // Reduce 8-bit channel to 4-bit channel (0-255 -> 0-15)
         int r4 = (r >> 4) & 0xF;
