@@ -9,6 +9,44 @@ GitHub Actions:
 
 This project contains driver implementations for various electronic components, using Pi4J V4+. Full description will be available on the Pi4J website at [Documentation > Using Drivers](https://pi4j.com/documentation/using-drivers).
 
+## Using this Library
+
+As this is library is still in early stage, you can only get a SNAPSHOT-version. To be able to use it in your project, you'll need to add both the dependency, and allow SNAPSHOTs:
+
+```xml
+<dependencies>
+   ...
+   <dependency>
+      <groupId>com.pi4j</groupId>
+      <artifactId>pi4j-drivers</artifactId>
+      <version>0.0.1-SNAPSHOT</version>
+   </dependency>
+   ...
+</dependencies>
+
+<repositories>
+   <!-- Non-snapshot Maven libraries + Pi4J Core snapshots -->
+   <repository>
+      <id>oss-snapshots-repo</id>
+      <name>Sonatype OSS Maven Repository</name>
+      <url>https://oss.sonatype.org/content/groups/public</url>
+      <releases>
+         <enabled>false</enabled>
+      </releases>
+      <snapshots>
+         <enabled>true</enabled>
+      </snapshots>
+   </repository>
+   
+   <!-- Pi4J Drivers snapshots -->
+   <repository>
+      <id>oss-snapshots-M2-repo</id>
+      <name>Sonatype OSS Maven2 Repository</name>
+      <url>https://central.sonatype.com/repository/maven-snapshots</url>
+   </repository>
+</repositories>
+```
+
 ## The Case for A Pi4j “driver” Subproject
 
 Document created by **Stefan Haustein**.
