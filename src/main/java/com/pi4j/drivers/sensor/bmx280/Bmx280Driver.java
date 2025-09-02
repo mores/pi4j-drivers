@@ -16,6 +16,7 @@
 
 package com.pi4j.drivers.sensor.bmx280;
 
+import com.pi4j.io.gpio.digital.DigitalOutput;
 import com.pi4j.io.i2c.I2C;
 import com.pi4j.io.i2c.I2CRegisterDataReaderWriter;
 import com.pi4j.io.spi.Spi;
@@ -27,6 +28,8 @@ import java.time.temporal.ChronoUnit;
  * Driver for BME 280 and BMP 280 chips.
  * <p>
  * Datasheet: https://www.bosch-sensortec.com/media/boschsensortec/downloads/datasheets/bst-bme280-ds002.pdf
+ * <p>
+ * This implementation is based on corresponding examples from the pi4-example-devices project.
  */
 public class Bmx280Driver {
 
@@ -38,13 +41,7 @@ public class Bmx280Driver {
     private final static double[] BMP_280_STANDBY_TIMES = {0.5, 62.5, 125, 250, 500, 1000, 10, 20};
 
     private final I2CRegisterDataReaderWriter registerAccess;
-    private final SensorType sensorType;
-    private MeasurementMode measurementMode = MeasurementMode.SLEEPING;
-
-    private Instant busyUntil = Instant.now();
-    private int standByTimeIndex = 0;
-    private int filterCoefficientIndex = 0;
-    private boolean spi3WireMode = false;
+    private final Model model;
 
     /** Calibration values for temperature */
     private final int digT1, digT2, digT3;
@@ -56,16 +53,23 @@ public class Bmx280Driver {
     // ByteBuffer doesn't seem to help a lot, given mixed big and little endian access.
     private final byte[] ioBuf = new byte[8];
 
+    private MeasurementMode measurementMode = MeasurementMode.SLEEPING;
+    private Instant busyUntil = Instant.now();
+    private int standByTimeIndex = 0;
+    private int filterCoefficientIndex = 0;
+    private boolean spi3WireMode = false;
+
     private SensorMode temperatureMode = SensorMode.ENABLED;
     private SensorMode pressureMode = SensorMode.ENABLED;
     private SensorMode humidityMode;
 
     /**
-     * Creates a BMx280 SPI driver using the given Spi instance. The additional pin is used
-     * to signal SPI access, as per the device SPI specification.
+     * Creates a BMx280 SPI driver using the given Spi instance. As the device requires csb to remain low
+     * during each register access, a dedicated pin is needed (opposed to a "standard" cs pin managed by the
+     * SPI driver.
      */
-    public Bmx280Driver(Spi spi) {
-        this (new SpiRegisterAccess(spi));
+    public Bmx280Driver(Spi spi, DigitalOutput csb) {
+        this (new SpiRegisterAccess(spi, csb));
     }
 
     /**
@@ -79,14 +83,14 @@ public class Bmx280Driver {
     protected Bmx280Driver(I2CRegisterDataReaderWriter registerAccess) {
         this.registerAccess = registerAccess;
 
-        int id = registerAccess.readRegister(Bmp280Constants.CHIP_ID);
-        if (id == Bmp280Constants.ID_VALUE_BMP) {
-            sensorType = SensorType.BMP280;
+        int chipId = registerAccess.readRegister(Bmp280Constants.CHIP_ID);
+        if (chipId == Bmp280Constants.ID_VALUE_BMP) {
+            model = Model.BMP280;
             digH1 = digH2 = digH3 = digH4 = digH5 = digH6 = 0;
             humidityMode = SensorMode.DISABLED;
 
-        } else if (id == Bmp280Constants.ID_VALUE_BME) {
-            sensorType = SensorType.BME280;
+        } else if (chipId == Bmp280Constants.ID_VALUE_BME) {
+            model = Model.BME280;
 
             digH1 = registerAccess.readRegister(Bme280Constants.REG_DIG_H1);
             digH2 = readRegisterS16(Bme280Constants.REG_DIG_H2);
@@ -110,7 +114,7 @@ public class Bmx280Driver {
             humidityMode = SensorMode.ENABLED;
 
         } else {
-            throw new IllegalStateException("Unrecognized chip ID: " + id);
+            throw new IllegalStateException("Unrecognized chip ID: " + chipId);
         }
 
         // Read calibration values.
@@ -147,14 +151,14 @@ public class Bmx280Driver {
         }
         this.measurementMode = mode;
 
-        materializeDelay(false);
+        materializeDelay();
 
         int config = (spi3WireMode ? 1 : 0)
                 | (filterCoefficientIndex << 2)
                 | (standByTimeIndex << 5);
         registerAccess.writeRegister(Bmp280Constants.CONFIG, config);
 
-        if (sensorType == SensorType.BME280) {
+        if (model == Model.BME280) {
             int ctlHum = registerAccess.readRegister(Bme280Constants.CTRL_HUM);
             ctlHum = (ctlHum & ~Bme280Constants.CTRL_HUM_MSK) | humidityMode.ordinal();
             registerAccess.writeRegister(Bme280Constants.CTRL_HUM, ctlHum);
@@ -184,7 +188,7 @@ public class Bmx280Driver {
      */
     public double setStandbyTime(double ms) {
         assertSleepingModeForSettings();
-        double[] list = sensorType == SensorType.BMP280 ? BMP_280_STANDBY_TIMES : BME_280_STANDBY_TIMES;
+        double[] list = model == Model.BMP280 ? BMP_280_STANDBY_TIMES : BME_280_STANDBY_TIMES;
         double bestDelta = Double.POSITIVE_INFINITY;
         for (int i = 0; i < list.length; i++) {
             double delta = Math.abs(list[i] - ms);
@@ -247,9 +251,9 @@ public class Bmx280Driver {
             setMeasurementMode(MeasurementMode.FORCED);
         }
 
-        materializeDelay(true);
+        materializeDelay();
 
-        registerAccess.readRegister(Bmp280Constants.PRESS_MSB, ioBuf, sensorType == SensorType.BME280 ? 8 : 6);
+        registerAccess.readRegister(Bmp280Constants.PRESS_MSB, ioBuf, 0, model == Model.BME280 ? 8 : 6);
 
         float adcT = ((ioBuf[3] & 0xFF) << 12) + ((ioBuf[4] & 0xFF) << 4) + (ioBuf[5] & 0xFF);
         float adcP = ((ioBuf[0] & 0xFF) << 12) + ((ioBuf[1] & 0xFF) << 4) + (ioBuf[2] & 0xFF);
@@ -282,7 +286,7 @@ public class Bmx280Driver {
         }
         float adcH = Float.NaN;
         double humidity = Double.NaN;
-        if (sensorType == SensorType.BME280 && humidityMode != SensorMode.DISABLED) {
+        if (model == Model.BME280 && humidityMode != SensorMode.DISABLED) {
             // Humidity
 
             adcH = ((ioBuf[6] & 0xFF) << 8) | (ioBuf[7] & 0xFF);
@@ -306,22 +310,21 @@ public class Bmx280Driver {
             measurementMode = MeasurementMode.SLEEPING;
         }
 
-        return new Measurement(
-                adcT / 1024.0f, adcP / 1024.0f, adcH / 1024.0f,
-                (float) temperature, (float) pressure, (float) humidity);
+        return new Measurement((float) temperature, (float) pressure, (float) humidity);
     }
 
     /**
      * Write the reset command to the BMP280.
      */
     public void reset() {
-        materializeDelay(false);
+        materializeDelay();
         registerAccess.writeRegister(Bmp280Constants.RESET, Bmp280Constants.RESET_CMD);
         setDelayMs(100);
     }
 
-    public SensorType getSensorType() {
-        return sensorType;
+    // Returns the sensor model (BME_280 or BMP_280)
+    public Model getModel() {
+        return model;
     }
 
     // Internal methods
@@ -348,7 +351,7 @@ public class Bmx280Driver {
         }
     }
 
-    private void materializeDelay(boolean forMeasurement) {
+    private void materializeDelay() {
         while (true) {
             long remaining = Instant.now().until(busyUntil, ChronoUnit.MILLIS);
             if (remaining < 0) {
@@ -364,7 +367,7 @@ public class Bmx280Driver {
     }
 
     private int readRegisterS16(int register) {
-        registerAccess.readRegister(register, ioBuf, 2);
+        registerAccess.readRegister(register, ioBuf, 0, 2);
         return (ioBuf[0] & 0xFF) | (ioBuf[1] << 8);
     }
 
@@ -375,34 +378,14 @@ public class Bmx280Driver {
     // Nested types
 
     public static class Measurement {
-        private final float rawTemperature;
-        private final float rawPressure;
-        private final float rawHumidity;
         private final float temperature;
         private final float pressure;
         private final float humidity;
 
-        Measurement(
-                float rawTemperature, float rawPressure, float rawHumidity,
-                float temperature, float pressure, float humidity) {
-            this.rawTemperature = rawTemperature;
-            this.rawPressure = rawPressure;
-            this.rawHumidity = rawHumidity;
+        Measurement(float temperature, float pressure, float humidity) {
             this.temperature = temperature;
             this.pressure = pressure;
             this.humidity = humidity;
-        }
-
-        public float getRawTemperature() {
-            return rawTemperature;
-        }
-
-        public float getRawHumidity() {
-            return rawHumidity;
-        }
-
-        public float getRawPressure() {
-            return rawPressure;
         }
 
         public float getTemperature() {
@@ -457,7 +440,7 @@ public class Bmx280Driver {
         FORCED
     }
 
-    public enum SensorType {
+    public enum Model {
         BME280, BMP280
     }
 }
