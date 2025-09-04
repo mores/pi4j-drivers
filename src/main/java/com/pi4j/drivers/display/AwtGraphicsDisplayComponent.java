@@ -88,36 +88,11 @@ public class AwtGraphicsDisplayComponent extends BaseGraphicsDisplayComponent {
                 }
             }
         } else if (dataBuffer instanceof DataBufferInt) {
-            int[] pixels = ((DataBufferInt) dataBuffer).getData();
 
-            for (int x = 0; x < img.getWidth(); x++) {
-                for (int y = 0; y < img.getHeight(); y++) {
+            int[] rgb888pixels = ((DataBufferInt) dataBuffer).getData();
+            drawImage(0, 0, img.getWidth(), img.getHeight(), rgb888pixels);
+            return;
 
-                    int i = x + y * img.getWidth();
-                    int alpha = (pixels[i] >> 24) & 0xff;
-                    int red = (pixels[i] >> 16) & 0xff;
-                    int green = (pixels[i] >> 8) & 0xff;
-                    int blue = (pixels[i] >> 0) & 0xff;
-
-                    if (x < displayInfo.getWidth() && y < displayInfo.getHeight()) {
-                        final int index = (y * img.getWidth()) + x;
-
-                        switch (displayInfo.getPixelFormat()) {
-                            case RGB_444:
-                                values[index] = rgb888toRgb444(red, green, blue);
-                                break;
-                            case RGB_565:
-                                values[index] = rgb888toRgb565(red, green, blue);
-                                break;
-                            default:
-                                throw new IllegalArgumentException(
-                                        "Unsupported pixel format: " + displayInfo.getPixelFormat());
-                        }
-
-                    }
-
-                }
-            }
         } else {
             throw new IllegalArgumentException("Unsupported dataBufferType: " + dataBuffer.getClass());
         }
@@ -138,6 +113,5 @@ public class AwtGraphicsDisplayComponent extends BaseGraphicsDisplayComponent {
 
             driver.setPixels(0, 0, displayInfo.getWidth(), displayInfo.getHeight(), data);
         }
-
     }
 }
