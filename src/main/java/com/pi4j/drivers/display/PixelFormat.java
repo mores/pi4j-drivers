@@ -16,7 +16,7 @@ public enum PixelFormat {
     }
 
     // The total number of bits used by this format.
-    public int getBitCount() {
+    int getBitCount() {
         return redBits + greenBits + blueBits;
     }
 
@@ -34,11 +34,12 @@ public enum PixelFormat {
             mask <<= 8;
         }
     }
+
     /**
      * Writes a 24-bit RGB value into the given buffer in this pixel format at the given *bit* offset,
      * returning the number of bits written.
      */
-    public int writeRgb(int rgb, byte[] buffer, int bitOffset) {
+    int writeRgb(int rgb, byte[] buffer, int bitOffset) {
         int red = (rgb >> (24 - redBits)) & 0xff;
         int green = (rgb >> (16 - greenBits)) & 0xff;
         int blue = (rgb >> (8 - blueBits)) & 0xff;
