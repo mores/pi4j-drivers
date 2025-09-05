@@ -1,6 +1,11 @@
 package com.pi4j.drivers.display;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class BaseGraphicsDisplayComponent {
+
+    private static Logger log = LoggerFactory.getLogger(BaseGraphicsDisplayComponent.class);
 
     protected final GraphicsDisplayDriver driver;
 
@@ -8,27 +13,30 @@ public class BaseGraphicsDisplayComponent {
         this.driver = driver;
     }
 
-    public void fillRect(int x, int y, int width, int height, int rgb888) throws java.io.IOException {
+    // it is possible that rgb888pixels contains more than will fit
+    // we will just ignore them
+    public void drawImage(int x, int y, int width, int height, int[] rgb888pixels) {
 
+        log.debug("drawImage: {},{} \t {} x {} \t {}", x, y, width, height, rgb888pixels.length);
         int[] values = new int[width * height];
 
-        int red = (rgb888 >> 16) & 0xFF;
-        int green = (rgb888 >> 8) & 0xFF;
-        int blue = (rgb888) & 0xFF;
+        for (int index = 0; index < values.length; index++) {
 
-        int adjustedForColorDepth = 0;
+            int alpha = (rgb888pixels[index] >> 24) & 0xff;
+            int red = (rgb888pixels[index] >> 16) & 0xff;
+            int green = (rgb888pixels[index] >> 8) & 0xff;
+            int blue = (rgb888pixels[index] >> 0) & 0xff;
 
-        if (PixelFormat.RGB_444 == driver.getDisplayInfo().getPixelFormat()) {
-            adjustedForColorDepth = rgb888toRgb444(red, green, blue);
-        } else if (PixelFormat.RGB_565 == driver.getDisplayInfo().getPixelFormat()) {
-            adjustedForColorDepth = rgb888toRgb565(red, green, blue);
-        }
-
-        for (int row = 0; row < width; row++) {
-            for (int col = 0; col < height; col++) {
-
-                final int index = ((col * width) + row);
-                values[index] = adjustedForColorDepth;
+            switch (driver.getDisplayInfo().getPixelFormat()) {
+                case RGB_444:
+                    values[index] = rgb888toRgb444(red, green, blue);
+                    break;
+                case RGB_565:
+                    values[index] = rgb888toRgb565(red, green, blue);
+                    break;
+                default:
+                    throw new IllegalArgumentException(
+                            "Unsupported pixel format: " + driver.getDisplayInfo().getPixelFormat());
             }
         }
 
@@ -50,7 +58,22 @@ public class BaseGraphicsDisplayComponent {
         }
     }
 
-    private byte[] pack12(int[] values) {
+    public void fillRect(int x, int y, int width, int height, int rgb888) throws java.io.IOException {
+
+        int[] rgb888pixels = new int[width * height];
+
+        for (int row = 0; row < width; row++) {
+            for (int col = 0; col < height; col++) {
+
+                final int index = ((col * width) + row);
+                rgb888pixels[index] = rgb888;
+            }
+        }
+
+        drawImage(x, y, width, height, rgb888pixels);
+    }
+
+    protected byte[] pack12(int[] values) {
         int n = values.length;
         byte[] packed = new byte[(n * 12 + 7) / 8];
 
@@ -66,13 +89,15 @@ public class BaseGraphicsDisplayComponent {
 
             packed[out++] = (byte) (v1 >>> 4);
             packed[out++] = (byte) ((v1 & 0xF) << 4 | (v2 >>> 8));
-            packed[out++] = (byte) (v2 & 0xFF);
+            if (i + 1 < n) {
+                packed[out++] = (byte) (v2 & 0xFF);
+            }
         }
 
         return packed;
     }
 
-    private int rgb888toRgb565(int r, int g, int b) {
+    protected int rgb888toRgb565(int r, int g, int b) {
 
         if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) {
             throw new IllegalArgumentException("Invalid Colour (" + r + "," + g + "," + b + ")");
@@ -117,7 +142,7 @@ public class BaseGraphicsDisplayComponent {
      * @param b blue (0-255)
      * @return 12-bit packed RGB444 value
      */
-    private int rgb888toRgb444(int r, int g, int b) {
+    protected int rgb888toRgb444(int r, int g, int b) {
 
         // Reduce 8-bit channel to 4-bit channel (0-255 -> 0-15)
         int r4 = (r >> 4) & 0xF;
