@@ -89,7 +89,9 @@ public class BaseGraphicsDisplayComponent {
 
             packed[out++] = (byte) (v1 >>> 4);
             packed[out++] = (byte) ((v1 & 0xF) << 4 | (v2 >>> 8));
-            packed[out++] = (byte) (v2 & 0xFF);
+            if (i + 1 < n) {
+                packed[out++] = (byte) (v2 & 0xFF);
+            }
         }
 
         return packed;
