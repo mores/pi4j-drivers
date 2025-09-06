@@ -31,17 +31,29 @@ public class FakeDisplayDriver implements GraphicsDisplayDriver {
         log.trace("setPixels: {} {} {} {}", x, y, width, height);
         log.trace("\t" + HexFormat.of().formatHex(data));
 
+        if (x < 0 || x + width > displayInfo.getWidth()) {
+            throw new IllegalArgumentException("x " + x  + " + width " +width + " exceeds display width " + displayInfo.getWidth());
+        }
+        if (y <0 ||y + height > displayInfo.getHeight()) {
+            throw new IllegalArgumentException("y " + y  + " + height " +height + " exceeds display height " + displayInfo.getHeight());
+        }
+
         PixelFormat pixelFormat = displayInfo.getPixelFormat();
 
-        if (x * pixelFormat.getBitCount() % 8 != 0) {
-            throw new IllegalArgumentException("misaligned x address");
-        }
+        checkAlignment(x, "x-position");
+        checkAlignment(width, "width");
 
         for (int i = 0; i < height; i++) {
             System.arraycopy(
                     data, (i * width * pixelFormat.getBitCount() + 7) / 8,
                     this.data, ((i + y) * getDisplayInfo().getWidth() * pixelFormat.getBitCount() + x + 7) / 8,
                     (width * pixelFormat.getBitCount() + 7) / 8);
+        }
+    }
+
+    private void checkAlignment(int x, String target) {
+        if (x * displayInfo.getPixelFormat().getBitCount() % 8 != 0) {
+            throw new IllegalArgumentException("misaligned for " + target + " -- must be aligned on byte address");
         }
     }
 }
