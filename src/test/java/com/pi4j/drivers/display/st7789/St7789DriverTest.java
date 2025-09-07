@@ -68,7 +68,7 @@ public class St7789DriverTest {
             rst.high();
             DigitalOutput dc = pi4j.create(DigitalOutputConfigBuilder.newInstance(pi4j).address(DC_ADDRESS).build());
             Spi spi = pi4j.create(SpiConfigBuilder.newInstance(pi4j).bus(SPI_BUS).address(SPI_ADDRESS).build());
-            return new St7789Driver(spi, dc, 240, PixelFormat.RGB_565);
+            return new St7789Driver(spi, dc, 240, PixelFormat.RGB_444);
         } catch (Pi4JException e) {
             Assumptions.abort("St7789 not found");
             throw new RuntimeException(e);

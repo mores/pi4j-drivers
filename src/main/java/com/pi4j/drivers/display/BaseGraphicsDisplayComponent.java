@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class BaseGraphicsDisplayComponent {
+    // TODO(https://github.com/Pi4J/pi4j/issues/475): Remove or update this limitation.
     private static final int MAX_SPI_TRANSFER_SIZE = 4000;
 
     private static Logger log = LoggerFactory.getLogger(BaseGraphicsDisplayComponent.class);
