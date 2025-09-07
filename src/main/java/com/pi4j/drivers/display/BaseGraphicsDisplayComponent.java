@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class BaseGraphicsDisplayComponent {
-    private static final int MAX_SPI_TRANSFER_SIZE = 65535;
+    private static final int MAX_SPI_TRANSFER_SIZE = 4000;
 
     private static Logger log = LoggerFactory.getLogger(BaseGraphicsDisplayComponent.class);
 
@@ -36,7 +36,10 @@ public class BaseGraphicsDisplayComponent {
         }
     }
 
-    public void fillRect(int x, int y, int width, int height, int rgb888) throws java.io.IOException {
+    public void fillRect(int x, int y, int width, int height, int rgb888) {
+        if (width <= 0 || height <= 0) {
+            return;
+        }
         PixelFormat pixelFormat = driver.getDisplayInfo().getPixelFormat();
 
         int bitsPerRow = width * pixelFormat.getBitCount();
