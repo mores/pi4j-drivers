@@ -24,6 +24,7 @@ import java.util.Random;
 public class St7789DriverTest {
     private static final int BACKLIGHT_ADDRESS = 24;
     private static final int DC_ADDRESS = 25;
+    private static final int SPI_BAUDRATE = 62_500_000;
     private static final int RST_ADDRESS = 27;
     private static final int SPI_BUS = 0;
     private static final int SPI_ADDRESS = 0;
@@ -67,7 +68,7 @@ public class St7789DriverTest {
             DigitalOutput rst = pi4j.create(DigitalOutputConfigBuilder.newInstance(pi4j).address(RST_ADDRESS).build());
             rst.high();
             DigitalOutput dc = pi4j.create(DigitalOutputConfigBuilder.newInstance(pi4j).address(DC_ADDRESS).build());
-            Spi spi = pi4j.create(SpiConfigBuilder.newInstance(pi4j).bus(SPI_BUS).address(SPI_ADDRESS).build());
+            Spi spi = pi4j.create(SpiConfigBuilder.newInstance(pi4j).bus(SPI_BUS).address(SPI_ADDRESS).baud(SPI_BAUDRATE).build());
             return new St7789Driver(spi, dc, 240, PixelFormat.RGB_444);
         } catch (Pi4JException e) {
             Assumptions.abort("St7789 not found");
