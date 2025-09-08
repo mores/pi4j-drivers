@@ -126,17 +126,21 @@ public class St7789Driver implements GraphicsDisplayDriver {
         dc.off();
     }
 
-    private void data(byte[] x) {
+    private void data(byte[] buf) {
+        data(buf, buf.length);
+    }
+
+    private void data(byte[] x, int length) {
         if (log.isTraceEnabled()) {  // Avoid large string allocation if logging is off.
             String raw = java.util.HexFormat.of().formatHex(x);
             if (raw.length() > 100) {
-                log.trace("Data: {} {}", x.length, raw.substring(0, 80));
+                log.trace("Data: {} {}", length, raw.substring(0, 80));
             } else {
-                log.trace("Data: {} {}", x.length, raw);
+                log.trace("Data: {} {}", length, raw);
             }
         }
         dc.on();
-        spi.write(x);
+        spi.write(x, length);
         dc.off();
     }
 
@@ -151,6 +155,6 @@ public class St7789Driver implements GraphicsDisplayDriver {
         command(CASET, x, x + width - 1); // Column addr set
         command(RASET, yOffset + y, yOffset + y + height - 1); // Row addr set
         command(RAMWR); // write to RAM
-        data(data);
+        data(data, width * height * displayInfo.getPixelFormat().getBitCount() / 8);
     }
 }

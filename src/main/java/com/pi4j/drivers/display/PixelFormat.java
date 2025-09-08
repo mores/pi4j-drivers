@@ -24,7 +24,7 @@ public enum PixelFormat {
     }
 
     // The total number of bits used by this format.
-    int getBitCount() {
+    public int getBitCount() {
         return redBitCount + greenBitCount + blueBitCount;
     }
 
