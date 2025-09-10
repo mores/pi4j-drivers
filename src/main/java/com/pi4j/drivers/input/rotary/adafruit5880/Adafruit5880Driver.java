@@ -1,9 +1,15 @@
 package com.pi4j.drivers.input.rotary.adafruit5880;
 
+import java.nio.ByteBuffer;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.pi4j.io.i2c.I2C;
+
+/*
+ *
+ */
 
 public class Adafruit5880Driver {
 
@@ -24,6 +30,8 @@ public class Adafruit5880Driver {
         }
         byte chipId = (byte) i2c.readRegister((byte) Adafruit5880Constants.STATUS_BASE);
         log.info("chipId: " + chipId);
+
+        setPosition(0);
     }
 
     public void setPixel(int color) throws Exception {
@@ -43,5 +51,33 @@ public class Adafruit5880Driver {
         show[1] = (byte) Adafruit5880Constants.NEOPIXEL_SHOW;
         i2c.write(show);
 
+    }
+
+    public int getPosition() {
+
+        i2c.writeRegister((byte) Adafruit5880Constants.ENCODER_BASE, (byte) Adafruit5880Constants.ENCODER_POSITION);
+
+        try {
+            Thread.sleep(8);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        ByteBuffer buf = i2c.readRegisterByteBuffer(Adafruit5880Constants.ENCODER_BASE, 4);
+        return buf.getInt();
+    }
+
+    public boolean setPosition(int pos) {
+
+        byte[] data = new byte[6];
+        data[0] = (byte) Adafruit5880Constants.ENCODER_BASE;
+        data[1] = (byte) Adafruit5880Constants.ENCODER_POSITION;
+
+        data[5] = (byte) (pos & 0xff);
+        data[4] = (byte) ((pos >> 8) & 0xff);
+        data[3] = (byte) ((pos >> 16) & 0xff);
+        data[2] = (byte) ((pos >> 24) & 0xff);
+        i2c.write(data);
+        return true;
     }
 }
