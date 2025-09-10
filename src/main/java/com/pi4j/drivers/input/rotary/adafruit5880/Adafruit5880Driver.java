@@ -31,6 +31,19 @@ public class Adafruit5880Driver {
         byte chipId = (byte) i2c.readRegister((byte) Adafruit5880Constants.STATUS_BASE);
         log.info("chipId: " + chipId);
 
+        byte[] pin = new byte[3];
+        pin[0] = (byte) Adafruit5880Constants.NEOPIXEL_BASE;
+        pin[1] = (byte) Adafruit5880Constants.NEOPIXEL_PIN;
+        pin[2] = (byte) 0x06;
+        i2c.write(pin);
+
+        byte[] bufLength = new byte[4];
+        bufLength[0] = (byte) Adafruit5880Constants.NEOPIXEL_BASE;
+        bufLength[1] = (byte) Adafruit5880Constants.NEOPIXEL_BUF_LENGTH;
+        bufLength[2] = (byte) 0x00;
+        bufLength[3] = (byte) 0x03;
+        i2c.write(bufLength);
+
         setPosition(0);
     }
 
