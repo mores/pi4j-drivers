@@ -2,6 +2,7 @@ package com.pi4j.drivers.input.rotary.adafruit5880;
 
 /**
  * Internal constants for register address, values and masks
+ * https://github.com/adafruit/Adafruit_Seesaw/blob/985b41efae3d9a8cba12a7b4d9ff0d226f9e0759/Adafruit_seesaw.h
  */
 class Adafruit5880Constants {
 
