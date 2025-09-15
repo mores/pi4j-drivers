@@ -1,9 +1,9 @@
-package com.pi4j.drivers.display;
+package com.pi4j.drivers.display.graphics;
 
 public enum PixelFormat {
 
-    RGB_444( 4, 4, 4), // 12-bit color format with 4 bits for each color channel (red, green, blue)
-    RGB_565( 5, 6, 5); // 16-bit color format that uses 5 bits for red, 6 bits for green, and 5 bits for blue
+    RGB_444(4, 4, 4), // 12-bit color format with 4 bits for each color channel (red, green, blue)
+    RGB_565(5, 6, 5); // 16-bit color format that uses 5 bits for red, 6 bits for green, and 5 bits for blue
 
     private final int redBitCount;
     private final int greenBitCount;
@@ -31,10 +31,14 @@ public enum PixelFormat {
     /**
      * Writes count bits (up to 24) into the given buffer at the given bit offset.
      *
-     * @param value The value to write.
-     * @param count The number of bits (up to 24).
-     * @param buffer The buffer to write the bits to
-     * @param bitOffset The bit offset in the buffer
+     * @param value
+     *            The value to write.
+     * @param count
+     *            The number of bits (up to 24).
+     * @param buffer
+     *            The buffer to write the bits to
+     * @param bitOffset
+     *            The bit offset in the buffer
      */
     private void writeBits(int value, int count, byte[] buffer, int bitOffset) {
         int byteOffset = bitOffset / 8;
@@ -59,8 +63,8 @@ public enum PixelFormat {
     }
 
     /**
-     * Writes a 24-bit RGB value into the given buffer in "this" pixel format at the given *bit* offset,
-     * returning the number of bits written.
+     * Writes a 24-bit RGB value into the given buffer in "this" pixel format at the given *bit* offset, returning the
+     * number of bits written.
      */
     int writeRgb(int rgb, byte[] buffer, int bitOffset) {
         int count = redBitCount + greenBitCount + blueBitCount;
@@ -71,11 +75,17 @@ public enum PixelFormat {
     /**
      * Writes 24 bit integer RGB values from srcRgb to dst in "this" pixel format.
      *
-     * @param srcRgb The source array with rgb values in 24 bit integers.
-     * @param srcOffset The start offset in the soruce array
-     * @param dst The destination buffer.
-     * @param dstBitOffset The bit offset in the desitination buffer.
-     * @param pixelCount The number of pixels to be transferred.
+     * @param srcRgb
+     *            The source array with rgb values in 24 bit integers.
+     * @param srcOffset
+     *            The start offset in the soruce array
+     * @param dst
+     *            The destination buffer.
+     * @param dstBitOffset
+     *            The bit offset in the desitination buffer.
+     * @param pixelCount
+     *            The number of pixels to be transferred.
+     *
      * @return The number of bits written.
      */
     int writeRgb(int[] srcRgb, int srcOffset, byte[] dst, int dstBitOffset, int pixelCount) {

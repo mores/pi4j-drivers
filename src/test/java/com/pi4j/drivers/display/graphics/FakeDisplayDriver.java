@@ -1,11 +1,11 @@
-package com.pi4j.drivers.display;
+package com.pi4j.drivers.display.graphics;
 
 import java.util.HexFormat;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FakeDisplayDriver implements GraphicsDisplayDriver {
+public class FakeDisplayDriver implements DisplayDriver {
 
     private static Logger log = LoggerFactory.getLogger(FakeDisplayDriver.class);
 
@@ -14,7 +14,8 @@ public class FakeDisplayDriver implements GraphicsDisplayDriver {
 
     public FakeDisplayDriver(DisplayInfo displayInfo) {
         this.displayInfo = displayInfo;
-        this.data = new byte[(displayInfo.getWidth() * displayInfo.getHeight() * displayInfo.getPixelFormat().getBitCount() + 7) / 8];
+        this.data = new byte[(displayInfo.getWidth() * displayInfo.getHeight()
+                * displayInfo.getPixelFormat().getBitCount() + 7) / 8];
     }
 
     public byte[] getData() {
@@ -32,10 +33,12 @@ public class FakeDisplayDriver implements GraphicsDisplayDriver {
         log.trace("\t" + HexFormat.of().formatHex(data));
 
         if (x < 0 || x + width > displayInfo.getWidth()) {
-            throw new IllegalArgumentException("x " + x  + " + width " +width + " exceeds display width " + displayInfo.getWidth());
+            throw new IllegalArgumentException(
+                    "x " + x + " + width " + width + " exceeds display width " + displayInfo.getWidth());
         }
-        if (y <0 ||y + height > displayInfo.getHeight()) {
-            throw new IllegalArgumentException("y " + y  + " + height " +height + " exceeds display height " + displayInfo.getHeight());
+        if (y < 0 || y + height > displayInfo.getHeight()) {
+            throw new IllegalArgumentException(
+                    "y " + y + " + height " + height + " exceeds display height " + displayInfo.getHeight());
         }
 
         PixelFormat pixelFormat = displayInfo.getPixelFormat();
@@ -44,9 +47,8 @@ public class FakeDisplayDriver implements GraphicsDisplayDriver {
         checkAlignment(width, "width");
 
         for (int i = 0; i < height; i++) {
-            System.arraycopy(
-                    data, (i * width * pixelFormat.getBitCount() + 7) / 8,
-                    this.data, ((i + y) * getDisplayInfo().getWidth() * pixelFormat.getBitCount() + x + 7) / 8,
+            System.arraycopy(data, (i * width * pixelFormat.getBitCount() + 7) / 8, this.data,
+                    ((i + y) * getDisplayInfo().getWidth() * pixelFormat.getBitCount() + x + 7) / 8,
                     (width * pixelFormat.getBitCount() + 7) / 8);
         }
     }

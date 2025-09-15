@@ -1,4 +1,4 @@
-package com.pi4j.drivers.display;
+package com.pi4j.drivers.display.graphics;
 
 import java.awt.Color;
 import java.io.IOException;
@@ -9,16 +9,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BaseGraphicsDisplayComponentTest {
+public class BaseDisplayComponentTest {
 
-    private static Logger log = LoggerFactory.getLogger(BaseGraphicsDisplayComponentTest.class);
+    private static Logger log = LoggerFactory.getLogger(BaseDisplayComponentTest.class);
 
     // 12 bit test
     // @Test
     public void testRgb888toRgb444() throws IOException {
 
         FakeDisplayDriver display = new FakeDisplayDriver(new DisplayInfo(100, 100, PixelFormat.RGB_444));
-        BaseGraphicsDisplayComponent mockDisplay = new BaseGraphicsDisplayComponent(display);
+        BaseDisplayComponent mockDisplay = new BaseDisplayComponent(display);
         mockDisplay.fillRect(0, 0, 48, 1, Color.RED.getRGB());
 
         byte[] data = display.getData();
@@ -34,7 +34,7 @@ public class BaseGraphicsDisplayComponentTest {
     public void testRgb888toRgb565() throws IOException {
 
         FakeDisplayDriver display = new FakeDisplayDriver(new DisplayInfo(100, 100, PixelFormat.RGB_565));
-        BaseGraphicsDisplayComponent mockDisplay = new BaseGraphicsDisplayComponent(display);
+        BaseDisplayComponent mockDisplay = new BaseDisplayComponent(display);
         mockDisplay.fillRect(0, 0, 48, 1, Color.RED.getRGB());
 
         byte[] data = display.getData();
