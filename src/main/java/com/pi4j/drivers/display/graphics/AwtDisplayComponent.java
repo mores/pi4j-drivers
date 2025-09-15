@@ -1,15 +1,15 @@
-package com.pi4j.drivers.display;
+package com.pi4j.drivers.display.graphics;
 
 import java.awt.image.BufferedImage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class AwtGraphicsDisplayComponent extends BaseGraphicsDisplayComponent {
+public class AwtDisplayComponent extends BaseDisplayComponent {
 
-    private static Logger log = LoggerFactory.getLogger(AwtGraphicsDisplayComponent.class);
+    private static Logger log = LoggerFactory.getLogger(AwtDisplayComponent.class);
 
-    public AwtGraphicsDisplayComponent(GraphicsDisplayDriver driver) {
+    public AwtDisplayComponent(DisplayDriver driver) {
         super(driver);
     }
 

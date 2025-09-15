@@ -1,21 +1,22 @@
-package com.pi4j.drivers.display;
+package com.pi4j.drivers.display.graphics;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BaseGraphicsDisplayComponent {
+public class BaseDisplayComponent {
     // TODO(https://github.com/Pi4J/pi4j/issues/475): Remove or update this limitation.
     private static final int MAX_SPI_TRANSFER_SIZE = 4000;
 
-    private static Logger log = LoggerFactory.getLogger(BaseGraphicsDisplayComponent.class);
+    private static Logger log = LoggerFactory.getLogger(BaseDisplayComponent.class);
 
-    protected final GraphicsDisplayDriver driver;
+    protected final DisplayDriver driver;
     private final byte[] spiBuffer;
 
-    public BaseGraphicsDisplayComponent(GraphicsDisplayDriver driver) {
+    public BaseDisplayComponent(DisplayDriver driver) {
         this.driver = driver;
         spiBuffer = new byte[Math.min(MAX_SPI_TRANSFER_SIZE,
-                (driver.getDisplayInfo().getHeight() * driver.getDisplayInfo().getWidth() * driver.getDisplayInfo().getPixelFormat().getBitCount() + 7) / 8)];
+                (driver.getDisplayInfo().getHeight() * driver.getDisplayInfo().getWidth()
+                        * driver.getDisplayInfo().getPixelFormat().getBitCount() + 7) / 8)];
     }
 
     // it is possible that rgb888pixels contains more than will fit
@@ -49,12 +50,7 @@ public class BaseGraphicsDisplayComponent {
         pixelFormat.fillRgb(spiBuffer, 0, width * rowCount, rgb888);
 
         for (int i = 0; i < height; i += rowCount) {
-            driver.setPixels(
-                    x,
-                    y + i,
-                    width,
-                    Math.min(rowCount, height - i),
-                    spiBuffer);
+            driver.setPixels(x, y + i, width, Math.min(rowCount, height - i), spiBuffer);
         }
     }
 }

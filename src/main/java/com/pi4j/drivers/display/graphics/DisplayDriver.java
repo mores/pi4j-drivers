@@ -1,6 +1,6 @@
-package com.pi4j.drivers.display;
+package com.pi4j.drivers.display.graphics;
 
-public interface GraphicsDisplayDriver {
+public interface DisplayDriver {
 
     DisplayInfo getDisplayInfo();
 

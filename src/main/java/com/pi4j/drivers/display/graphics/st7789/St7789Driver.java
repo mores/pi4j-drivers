@@ -1,8 +1,8 @@
-package com.pi4j.drivers.display.st7789;
+package com.pi4j.drivers.display.graphics.st7789;
 
-import com.pi4j.drivers.display.GraphicsDisplayDriver;
-import com.pi4j.drivers.display.PixelFormat;
-import com.pi4j.drivers.display.DisplayInfo;
+import com.pi4j.drivers.display.graphics.DisplayDriver;
+import com.pi4j.drivers.display.graphics.PixelFormat;
+import com.pi4j.drivers.display.graphics.DisplayInfo;
 
 import com.pi4j.io.gpio.digital.DigitalOutput;
 import com.pi4j.io.spi.Spi;
@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
  * https://www.adafruit.com/product/3787
  */
 
-public class St7789Driver implements GraphicsDisplayDriver {
+public class St7789Driver implements DisplayDriver {
 
     private static Logger log = LoggerFactory.getLogger(St7789Driver.class);
     private final static int WIDTH = 240;
@@ -96,7 +96,7 @@ public class St7789Driver implements GraphicsDisplayDriver {
 
     }
 
-    private void command(int x)  {
+    private void command(int x) {
         if (x < 0 || x > 0xff) {
             throw new IllegalArgumentException("ST7789 bad command value " + x);
         }
@@ -131,7 +131,7 @@ public class St7789Driver implements GraphicsDisplayDriver {
     }
 
     private void data(byte[] x, int length) {
-        if (log.isTraceEnabled()) {  // Avoid large string allocation if logging is off.
+        if (log.isTraceEnabled()) { // Avoid large string allocation if logging is off.
             String raw = java.util.HexFormat.of().formatHex(x);
             if (raw.length() > 100) {
                 log.trace("Data: {} {}", length, raw.substring(0, 80));
