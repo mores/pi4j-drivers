@@ -1,4 +1,4 @@
-package com.pi4j.drivers.io.expander;
+package com.pi4j.drivers.io.expander.pcf8574;
 
 import com.pi4j.io.OnOffWrite;
 import com.pi4j.io.exception.IOException;
