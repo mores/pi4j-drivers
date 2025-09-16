@@ -9,7 +9,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Used for 16x2 (1602) and similar (20x4/2004...) character LCD.
+ * Used for 16x2 (1602) and similar (20x4/2004...) character LCD driven by a HD 44780 chip.
+ *
+ * Depending on the display IO connection, use with4BitConnection() for a 4-bit parallel connection or
+ * withPcf8574Connection() for the most common I2C connection type.
  *
  * Spec: https://cdn.sparkfun.com/assets/9/5/f/7/b/HD44780.pdf
  */
@@ -60,6 +63,7 @@ public class Hd44780Driver {
     private boolean blinkingEnabled = false;
     private Map<Integer, Integer> characterRomMap = CHARACTER_ROM_A00;
 
+    /** Creates a HD 44680 Driver with a parallel 4-bit 7-pin connection. */
     public static Hd44780Driver with4BitConnection(
             OnOffWrite<?> registerSelect,
             OnOffWrite<?> enable,
@@ -76,6 +80,11 @@ public class Hd44780Driver {
                 height);
     }
 
+    /**
+     * Creates a HD 44680 Driver for a text LCD connected via I2C using a PCF 8574 IO expander. This implementation
+     * uses the Pcf8574OutputDriver class to illustrate how different drivers can be combined (opposed to a simple
+     * direct AbstractConnection subclass).
+     */
     public static Hd44780Driver withPcf8574Connection(I2C i2c, int width, int height) {
         Pcf8574OutputDriver pcf8574 = new Pcf8574OutputDriver(i2c);
         pcf8574.setTriggerMask(0b0100);
@@ -92,7 +101,7 @@ public class Hd44780Driver {
                 height);
     }
 
-    /** Please use one of the factory methods to create a driver instance */
+    /** Please use one of the "withXxx" factory methods to create a driver instance */
     public Hd44780Driver(AbstractConnection connection, int width, int height) {
         this.connection = connection;
         this.width = width;
