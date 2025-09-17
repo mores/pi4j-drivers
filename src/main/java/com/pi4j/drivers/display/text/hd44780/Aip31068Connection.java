@@ -9,7 +9,6 @@ import com.pi4j.io.i2c.I2C;
  */
 public class Aip31068Connection extends AbstractConnection {
     private final I2C i2c;
-    private byte[] buf = new byte[2];
 
     public Aip31068Connection(I2C i2c) {
         this.i2c = i2c;
