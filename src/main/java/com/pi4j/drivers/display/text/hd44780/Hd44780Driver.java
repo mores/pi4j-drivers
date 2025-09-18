@@ -84,6 +84,9 @@ public class Hd44780Driver {
      * Creates a HD 44680 Driver for a text LCD connected via I2C using a PCF 8574 IO expander. This implementation
      * uses the Pcf8574OutputDriver class to illustrate how different drivers can be combined (opposed to a simple
      * direct AbstractConnection subclass).
+     * <p>
+     * Most PCF 8574 based text LCDs seem to have a "daughter board" with the PC 8574 chip attached to the back
+     * of the main LCD board, connected to the data and control lines of the main LCD controller board.
      */
     public static Hd44780Driver withPcf8574Connection(I2C i2c, int width, int height) {
         Pcf8574OutputDriver pcf8574 = new Pcf8574OutputDriver(i2c);
@@ -101,7 +104,18 @@ public class Hd44780Driver {
                 height);
     }
 
-    /** Please use one of the "withXxx" factory methods to create a driver instance */
+    /**
+     * Creates a driver for an AIP31068 LCD controller with native I2C support. These typically only consist of a
+     * single board without a separate I2C daughter board.
+     */
+    public static Hd44780Driver withAip31068Connection(I2C i2c, int width, int height) {
+        return new Hd44780Driver(new Aip31068Connection(i2c), width, height);
+    }
+
+    /**
+     * Please use one of the "withXxx" factory methods to create a driver instance. This method is public
+     * to support user defined connection implementations.
+     */
     public Hd44780Driver(AbstractConnection connection, int width, int height) {
         this.connection = connection;
         this.width = width;
