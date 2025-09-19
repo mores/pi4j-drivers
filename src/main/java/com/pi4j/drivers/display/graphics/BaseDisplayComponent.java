@@ -5,16 +5,16 @@ import org.slf4j.LoggerFactory;
 
 public class BaseDisplayComponent {
     // TODO(https://github.com/Pi4J/pi4j/issues/475): Remove or update this limitation.
-    private static final int MAX_SPI_TRANSFER_SIZE = 4000;
+    private static final int MAX_TRANSFER_SIZE = 4000;
 
     private static Logger log = LoggerFactory.getLogger(BaseDisplayComponent.class);
 
     protected final DisplayDriver driver;
-    private final byte[] spiBuffer;
+    private final byte[] transferBuffer;
 
     public BaseDisplayComponent(DisplayDriver driver) {
         this.driver = driver;
-        spiBuffer = new byte[Math.min(MAX_SPI_TRANSFER_SIZE,
+        transferBuffer = new byte[Math.min(MAX_TRANSFER_SIZE,
                 (driver.getDisplayInfo().getHeight() * driver.getDisplayInfo().getWidth()
                         * driver.getDisplayInfo().getPixelFormat().getBitCount() + 7) / 8)];
     }
@@ -28,11 +28,11 @@ public class BaseDisplayComponent {
         int bitsPerRow = width * pixelFormat.getBitCount();
         int bitOffset = 0;
         for (int i = 0; i < height; i++) {
-            bitOffset += pixelFormat.writeRgb(rgb888pixels, width * i, spiBuffer, bitOffset, width);
+            bitOffset += pixelFormat.writeRgb(rgb888pixels, width * i, transferBuffer, bitOffset, width);
             // Transfer if the last row is reached or the next row would overflow the buffer.
-            if (i == height - 1 || bitOffset + bitsPerRow > spiBuffer.length * 8) {
+            if (i == height - 1 || bitOffset + bitsPerRow > transferBuffer.length * 8) {
                 int rows = bitOffset / bitsPerRow;
-                driver.setPixels(x, y + i + 1 - rows, width, rows, spiBuffer);
+                driver.setPixels(x, y + i + 1 - rows, width, rows, transferBuffer);
                 bitOffset = 0;
             }
         }
@@ -45,12 +45,12 @@ public class BaseDisplayComponent {
         PixelFormat pixelFormat = driver.getDisplayInfo().getPixelFormat();
 
         int bitsPerRow = width * pixelFormat.getBitCount();
-        int rowCount = spiBuffer.length * 8 / bitsPerRow;
+        int rowCount = transferBuffer.length * 8 / bitsPerRow;
 
-        pixelFormat.fillRgb(spiBuffer, 0, width * rowCount, rgb888);
+        pixelFormat.fillRgb(transferBuffer, 0, width * rowCount, rgb888);
 
         for (int i = 0; i < height; i += rowCount) {
-            driver.setPixels(x, y + i, width, Math.min(rowCount, height - i), spiBuffer);
+            driver.setPixels(x, y + i, width, Math.min(rowCount, height - i), transferBuffer);
         }
     }
 }

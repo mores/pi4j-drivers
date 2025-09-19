@@ -3,7 +3,8 @@ package com.pi4j.drivers.display.graphics;
 public enum PixelFormat {
 
     RGB_444(4, 4, 4), // 12-bit color format with 4 bits for each color channel (red, green, blue)
-    RGB_565(5, 6, 5); // 16-bit color format that uses 5 bits for red, 6 bits for green, and 5 bits for blue
+    RGB_565(5, 6, 5), // 16-bit color format that uses 5 bits for red, 6 bits for green, and 5 bits for blue
+    RGB_888(8, 8, 8);
 
     private final int redBitCount;
     private final int greenBitCount;
