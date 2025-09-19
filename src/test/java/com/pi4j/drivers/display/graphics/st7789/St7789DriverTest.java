@@ -1,26 +1,17 @@
 package com.pi4j.drivers.display.graphics.st7789;
 
-import com.pi4j.Pi4J;
 import com.pi4j.context.Context;
-import com.pi4j.drivers.display.graphics.BaseDisplayComponent;
-import com.pi4j.drivers.display.graphics.DisplayInfo;
-import com.pi4j.drivers.display.graphics.PixelFormat;
-import com.pi4j.exception.Pi4JException;
+import com.pi4j.drivers.display.graphics.*;
 import com.pi4j.io.gpio.digital.DigitalOutput;
 import com.pi4j.io.gpio.digital.DigitalOutputConfigBuilder;
 import com.pi4j.io.spi.Spi;
 import com.pi4j.io.spi.SpiConfigBuilder;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assumptions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import java.util.Random;
 
 /**
  * This test assumes the waveshare 1.3inch IPS display HAT pinout, see https://www.waveshare.com/1.3inch-lcd-hat.htm
  */
-public class St7789DriverTest {
+public class St7789DriverTest extends AbstractDisplayDriverTest {
     private static final int BACKLIGHT_ADDRESS = 24;
     private static final int DC_ADDRESS = 25;
     private static final int SPI_BAUDRATE = 62_500_000;
@@ -28,38 +19,8 @@ public class St7789DriverTest {
     private static final int SPI_BUS = 0;
     private static final int SPI_ADDRESS = 0;
 
-    private Context pi4j;
-
-    @BeforeEach
-    public void setUp() {
-        pi4j = Pi4J.newAutoContext();
-    }
-
-    @AfterEach
-    public void tearDown() {
-        pi4j.shutdown();
-    }
-
-    @Test
-    public void testFillRect() {
-        St7789Driver driver = createDriver();
-        BaseDisplayComponent display = new BaseDisplayComponent(driver);
-        DisplayInfo displayInfo = driver.getDisplayInfo();
-        int width = displayInfo.getWidth();
-        int height = displayInfo.getHeight();
-        display.fillRect(0, 0, width, height, 0xffffff);
-        Random random = new Random(0);
-        for (int i = 0; i < 10; i++) {
-            int x = random.nextInt(width);
-            int y = random.nextInt(height);
-            int w = random.nextInt(width - x);
-            int h = random.nextInt(height - y);
-            int color = random.nextInt(0xffffff);
-            display.fillRect(x, y, w, h, color);
-        }
-    }
-
-    private St7789Driver createDriver() {
+    @Override
+    public DisplayDriver createDriver(Context pi4j) {
         try {
             DigitalOutput bl = pi4j
                     .create(DigitalOutputConfigBuilder.newInstance(pi4j).address(BACKLIGHT_ADDRESS).build());
