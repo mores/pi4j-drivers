@@ -35,6 +35,7 @@ public class BaseDisplayComponentTest {
 
         FakeDisplayDriver display = new FakeDisplayDriver(new DisplayInfo(100, 100, PixelFormat.RGB_565));
         BaseDisplayComponent mockDisplay = new BaseDisplayComponent(display);
+        mockDisplay.setTransferDelayMillis(0);
         mockDisplay.fillRect(0, 0, 48, 1, Color.RED.getRGB());
 
         byte[] data = display.getData();

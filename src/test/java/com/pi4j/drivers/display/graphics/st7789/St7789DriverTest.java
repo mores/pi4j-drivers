@@ -1,7 +1,9 @@
 package com.pi4j.drivers.display.graphics.st7789;
 
 import com.pi4j.context.Context;
-import com.pi4j.drivers.display.graphics.*;
+import com.pi4j.drivers.display.graphics.AbstractDisplayDriverTest;
+import com.pi4j.drivers.display.graphics.DisplayDriver;
+import com.pi4j.drivers.display.graphics.PixelFormat;
 import com.pi4j.io.gpio.digital.DigitalOutput;
 import com.pi4j.io.gpio.digital.DigitalOutputConfigBuilder;
 import com.pi4j.io.spi.Spi;

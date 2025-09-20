@@ -43,6 +43,7 @@ public abstract class AbstractDisplayDriverTest {
             Thread.sleep(100);
         }
         display.fillRect(0, 0, width, height, 0);
+        display.flush(); // Make sure we don't get writes later.
     }
 
 }
