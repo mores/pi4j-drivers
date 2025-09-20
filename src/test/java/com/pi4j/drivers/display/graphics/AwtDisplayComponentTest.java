@@ -33,6 +33,7 @@ public class AwtDisplayComponentTest {
 
         FakeDisplayDriver display = new FakeDisplayDriver(new DisplayInfo(10, 10, PixelFormat.RGB_444));
         AwtDisplayComponent mockDisplay = new AwtDisplayComponent(display);
+        mockDisplay.setTransferDelayMillis(0);
 
         BufferedImage img = new BufferedImage(12, 12, BufferedImage.TYPE_4BYTE_ABGR);
         Graphics2D g2d = img.createGraphics();
@@ -55,6 +56,7 @@ public class AwtDisplayComponentTest {
 
         FakeDisplayDriver display = new FakeDisplayDriver(new DisplayInfo(10, 10, PixelFormat.RGB_565));
         AwtDisplayComponent mockDisplay = new AwtDisplayComponent(display);
+        mockDisplay.setTransferDelayMillis(0);
 
         BufferedImage img = new BufferedImage(12, 12, BufferedImage.TYPE_4BYTE_ABGR);
         Graphics2D g2d = img.createGraphics();
@@ -76,6 +78,7 @@ public class AwtDisplayComponentTest {
 
         FakeDisplayDriver display = new FakeDisplayDriver(new DisplayInfo(10, 10, PixelFormat.RGB_444));
         AwtDisplayComponent mockDisplay = new AwtDisplayComponent(display);
+        mockDisplay.setTransferDelayMillis(0);
 
         BufferedImage img = makeDataBufferInt();
         mockDisplay.display(img);
@@ -92,6 +95,7 @@ public class AwtDisplayComponentTest {
 
         FakeDisplayDriver display = new FakeDisplayDriver(new DisplayInfo(10, 10, PixelFormat.RGB_565));
         AwtDisplayComponent mockDisplay = new AwtDisplayComponent(display);
+        mockDisplay.setTransferDelayMillis(0);
 
         BufferedImage img = makeDataBufferInt();
         mockDisplay.display(img);

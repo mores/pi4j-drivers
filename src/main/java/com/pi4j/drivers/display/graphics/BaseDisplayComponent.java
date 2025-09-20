@@ -55,6 +55,19 @@ public class BaseDisplayComponent {
         }
     }
 
+    /** Forces an immediate transfer of the modified screen area */
+    public void flush() {
+        synchronized (lock) {
+            if (modifiedXMin < Integer.MAX_VALUE) {
+                transferBuffer(modifiedXMin, modifiedYMin, modifiedXMax, modifiedYMax);
+                modifiedXMin = Integer.MAX_VALUE;
+                modifiedYMin = Integer.MAX_VALUE;
+                modifiedXMax = Integer.MIN_VALUE;
+                modifiedYMax = Integer.MIN_VALUE;
+            }
+        }
+    }
+
     /** Sets the pixel at the given coordinates to the given color */
     public void setPixel(int x, int y, int color) {
         synchronized (lock) {
@@ -66,38 +79,39 @@ public class BaseDisplayComponent {
         }
     }
 
+    /**
+     * Sets the maximum delay between graphics updates and the screen buffer transfer to the display driver.
+     * Setting the value to 0 will send all data immediately. A negative value will require an explicit
+     * call to flush for the transfer. The default value is 15;
+     */
+    public void setTransferDelayMillis(int millis) {
+        this.transferDelayMillis = millis;
+    }
+
     /** Marks the given screen area as modified */
     private void markModified(int xMin, int yMin, int xMax, int yMax) {
         synchronized (lock) {
+            modifiedXMin = Math.min(modifiedXMin, xMin);
+            modifiedYMin = Math.min(modifiedYMin, yMin);
+            modifiedXMax = Math.max(modifiedXMax, xMax);
+            modifiedYMax = Math.max(modifiedYMax, yMax);
             if (transferDelayMillis == 0) {
-                transferBuffer(xMin, yMin, xMax, yMax);
-            } else {
-                modifiedXMin = Math.min(modifiedXMin, xMin);
-                modifiedYMin = Math.min(modifiedYMin, yMin);
-                modifiedXMax = Math.max(modifiedXMax, xMax);
-                modifiedYMax = Math.max(modifiedYMax, yMax);
-                if (!updatePending) {
-                    updatePending = true;
-                    timer.schedule(new TimerTask() {
-                        @Override
-                        public void run() {
-                            synchronized (lock) {
-                                updatePending = false;
-                                transferBuffer(modifiedXMin, modifiedYMin, modifiedXMax, modifiedYMin);
-                                modifiedXMin = Integer.MAX_VALUE;
-                                modifiedYMin = Integer.MAX_VALUE;
-                                modifiedXMax = Integer.MIN_VALUE;
-                                modifiedYMax = Integer.MIN_VALUE;
-                            }
-                        }
-                    }, transferDelayMillis);
-                }
+                flush();
+            } else if (!updatePending && transferDelayMillis > 0) {
+                updatePending = true;
+                timer.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        updatePending = false;
+                        flush();
+                    }}, transferDelayMillis);
             }
         }
     }
 
-    // Private methods. Note that internally, we assume coordinates are in range while we account for out-of-bounds
-    // coordinates in user methods.
+    // Private methods. Note that internally
+    // - we assume coordinates are in range while we account for out-of-bounds coordinates in user methods.
+    // - we use min/max coordinate bounds instead of width/height as in user methods.
 
     /** Returns the address of the given pixel in the display buffer */
     private int pixelAddress(int x, int y) {
@@ -140,9 +154,10 @@ public class BaseDisplayComponent {
             }
             for (int targetY = yMin; targetY < yMax; targetY++) {
                 int start = pixelAddress(xMin, targetY);
-                Arrays.fill(displayBuffer, rgb888, start, start + xMax - xMin);
+                Arrays.fill(displayBuffer, start, start + xMax - xMin, rgb888);
             }
-            markModified(xMin, yMin, xMax - xMin, yMax - yMin);
+            markModified(xMin, yMin, xMax, yMax);
         }
     }
+
 }
