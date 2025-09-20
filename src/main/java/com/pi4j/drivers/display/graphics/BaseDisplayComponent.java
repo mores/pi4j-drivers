@@ -1,8 +1,5 @@
 package com.pi4j.drivers.display.graphics;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -23,57 +20,62 @@ public class BaseDisplayComponent {
     private int modifiedYMin = Integer.MAX_VALUE;
     private boolean updatePending = false;
     private int transferDelayMillis = 20;
+    private final int displayWidth;
+    private final int displayHeight;
 
     public BaseDisplayComponent(DisplayDriver driver) {
         this.driver = driver;
-        displayBuffer = new int[driver.getDisplayInfo().getWidth() * driver.getDisplayInfo().getHeight()];
+        displayWidth = driver.getDisplayInfo().getWidth();
+        displayHeight = driver.getDisplayInfo().getHeight();
+        displayBuffer = new int[displayWidth * displayHeight];
         transferBuffer = new byte[Math.min(
                 MAX_TRANSFER_SIZE,
-                (driver.getDisplayInfo().getHeight() * driver.getDisplayInfo().getWidth()
-                        * driver.getDisplayInfo().getPixelFormat().getBitCount() + 7) / 8)];
+                (displayWidth * displayHeight * driver.getDisplayInfo().getPixelFormat().getBitCount() + 7) / 8)];
     }
 
-    // it is possible that rgb888pixels contains more than will fit
-    // we will just ignore them
+    /** Draws an image at the given coordinates */
     public void drawImage(int x, int y, int width, int height, int[] rgb888pixels) {
         synchronized (lock) {
-            for (int i = 0; i < height; i++) {
+            int xMin = Math.max(0, x);
+            int yMin = Math.max(0, y);
+            int xMax = Math.min(x + width, displayWidth);
+            int yMax = Math.min(y + height, displayHeight);
+            if (xMax <= xMin || yMax <= yMin) {
+                return;
+            }
+            for (int targetY = yMin; targetY < yMax; targetY++) {
                 System.arraycopy(
                         rgb888pixels,
-                        i * width,
+                        (targetY - y) * width + xMin - x,
                         displayBuffer,
-                        pixelAddress(x, y + i),
-                        width);
+                        pixelAddress(xMin, targetY),
+                        xMax - xMin);
             }
-            markDirty(x, y, width, height);
+            markModified(xMin, yMin, xMax, yMax);
         }
     }
 
+    /** Sets the pixel at the given coordinates to the given color */
     public void setPixel(int x, int y, int color) {
         synchronized (lock) {
+            if (x < 0 || y < 0 || x >= displayWidth || y >= displayHeight) {
+                return;
+            }
             displayBuffer[pixelAddress(x, y)] = color;
-            markDirty(x, y, 1, 1);
+            markModified(x, y, 1, 1);
         }
     }
 
-
-    private void markDirty(int x, int y, int width, int height) {
+    /** Marks the given screen area as modified */
+    private void markModified(int xMin, int yMin, int xMax, int yMax) {
         synchronized (lock) {
             if (transferDelayMillis == 0) {
-                transferBuffer(x, y, width, height);
+                transferBuffer(xMin, yMin, xMax, yMax);
             } else {
-                if (x < modifiedXMin) {
-                    modifiedXMin = x;
-                }
-                if (x + width > modifiedXMax) {
-                    modifiedXMax = x + width;
-                }
-                if (y < modifiedYMin) {
-                    modifiedYMin = y;
-                }
-                if (y + height > modifiedYMax) {
-                    modifiedYMax = y + height;
-                }
+                modifiedXMin = Math.min(modifiedXMin, xMin);
+                modifiedYMin = Math.min(modifiedYMin, yMin);
+                modifiedXMax = Math.max(modifiedXMax, xMax);
+                modifiedYMax = Math.max(modifiedYMax, yMax);
                 if (!updatePending) {
                     updatePending = true;
                     timer.schedule(new TimerTask() {
@@ -81,11 +83,11 @@ public class BaseDisplayComponent {
                         public void run() {
                             synchronized (lock) {
                                 updatePending = false;
-                                transferBuffer(
-                                        modifiedXMin,
-                                        modifiedYMin,
-                                        modifiedXMax - modifiedXMin,
-                                        modifiedYMax - modifiedYMin);
+                                transferBuffer(modifiedXMin, modifiedYMin, modifiedXMax, modifiedYMin);
+                                modifiedXMin = Integer.MAX_VALUE;
+                                modifiedYMin = Integer.MAX_VALUE;
+                                modifiedXMax = Integer.MIN_VALUE;
+                                modifiedYMax = Integer.MIN_VALUE;
                             }
                         }
                     }, transferDelayMillis);
@@ -94,27 +96,33 @@ public class BaseDisplayComponent {
         }
     }
 
+    // Private methods. Note that internally, we assume coordinates are in range while we account for out-of-bounds
+    // coordinates in user methods.
+
     /** Returns the address of the given pixel in the display buffer */
     private int pixelAddress(int x, int y) {
         return y * driver.getDisplayInfo().getWidth() + x;
     }
 
-    private void transferBuffer(int x, int y, int width, int height) {
+    /** Transfers the given display buffer area to the display driver */
+    private void transferBuffer(int xMin, int yMin, int xMax, int yMax) {
         synchronized (lock) {
+            int width = xMax - xMin;
+            int height = yMax - yMin;
             PixelFormat pixelFormat = driver.getDisplayInfo().getPixelFormat();
             int bitsPerRow = width * pixelFormat.getBitCount();
             int bitOffset = 0;
             for (int i = 0; i < height; i++) {
                 bitOffset += pixelFormat.writeRgb(
                         displayBuffer,
-                        pixelAddress(x, y + i),
+                        pixelAddress(xMin, yMin + i),
                         transferBuffer,
                         bitOffset,
                         width);
                 // Transfer if the last row is reached or the next row would overflow the buffer.
                 if (i == height - 1 || bitOffset + bitsPerRow > transferBuffer.length * 8) {
                     int rows = bitOffset / bitsPerRow;
-                    driver.setPixels(x, y + i + 1 - rows, width, rows, transferBuffer);
+                    driver.setPixels(xMin, yMin + i + 1 - rows, width, rows, transferBuffer);
                     bitOffset = 0;
                 }
             }
@@ -123,14 +131,18 @@ public class BaseDisplayComponent {
 
     public void fillRect(int x, int y, int width, int height, int rgb888) {
         synchronized (lock) {
-            if (width <= 0 || height <= 0) {
+            int xMin = Math.max(0, x);
+            int yMin = Math.max(0, y);
+            int xMax = Math.min(x + width, displayWidth);
+            int yMax = Math.min(y + height, displayHeight);
+            if (xMax <= xMin || yMax <= yMin) {
                 return;
             }
-            for (int i = 0; i < height; i++) {
-                int start = pixelAddress(x, y + i);
-                Arrays.fill(displayBuffer, rgb888, start, start + width);
+            for (int targetY = yMin; targetY < yMax; targetY++) {
+                int start = pixelAddress(xMin, targetY);
+                Arrays.fill(displayBuffer, rgb888, start, start + xMax - xMin);
             }
-            markDirty(x, y, width, height);
+            markModified(xMin, yMin, xMax - xMin, yMax - yMin);
         }
     }
 }
