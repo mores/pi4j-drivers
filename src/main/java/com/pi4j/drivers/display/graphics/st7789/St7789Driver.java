@@ -1,8 +1,8 @@
 package com.pi4j.drivers.display.graphics.st7789;
 
-import com.pi4j.drivers.display.graphics.DisplayDriver;
+import com.pi4j.drivers.display.graphics.GraphicsDisplayDriver;
 import com.pi4j.drivers.display.graphics.PixelFormat;
-import com.pi4j.drivers.display.graphics.DisplayInfo;
+import com.pi4j.drivers.display.graphics.GraphicsDisplayInfo;
 
 import com.pi4j.io.gpio.digital.DigitalOutput;
 import com.pi4j.io.spi.Spi;
@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
  * https://www.adafruit.com/product/3787
  */
 
-public class St7789Driver implements DisplayDriver {
+public class St7789Driver implements GraphicsDisplayDriver {
 
     private static Logger log = LoggerFactory.getLogger(St7789Driver.class);
     private final static int WIDTH = 240;
@@ -46,12 +46,12 @@ public class St7789Driver implements DisplayDriver {
 
     private final Spi spi;
     private final DigitalOutput dc;
-    private final DisplayInfo displayInfo;
+    private final GraphicsDisplayInfo displayInfo;
 
     public St7789Driver(Spi spi, DigitalOutput dc, int displayHeight, PixelFormat pixelFormat) {
         this.spi = spi;
         this.dc = dc;
-        this.displayInfo = new DisplayInfo(WIDTH, displayHeight, pixelFormat);
+        this.displayInfo = new GraphicsDisplayInfo(WIDTH, displayHeight, pixelFormat);
         this.yOffset = 320 - displayHeight;
 
         init();
@@ -145,7 +145,7 @@ public class St7789Driver implements DisplayDriver {
     }
 
     @Override
-    public DisplayInfo getDisplayInfo() {
+    public GraphicsDisplayInfo getDisplayInfo() {
         return displayInfo;
     }
 

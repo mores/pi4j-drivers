@@ -5,18 +5,18 @@ import java.awt.image.BufferedImage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class AwtDisplayComponent extends BaseDisplayComponent {
+public class AwtGraphicsDisplay extends GraphicsDisplay {
 
-    private static Logger log = LoggerFactory.getLogger(AwtDisplayComponent.class);
+    private static Logger log = LoggerFactory.getLogger(AwtGraphicsDisplay.class);
 
-    public AwtDisplayComponent(DisplayDriver driver) {
+    public AwtGraphicsDisplay(GraphicsDisplayDriver driver) {
         super(driver);
     }
 
     public void display(BufferedImage rawImg) {
 
         log.debug("display: {} {} x {}", rawImg.getType(), rawImg.getWidth(), rawImg.getHeight());
-        DisplayInfo displayInfo = driver.getDisplayInfo();
+        GraphicsDisplayInfo displayInfo = driver.getDisplayInfo();
 
         // clip the image to what will fit on the display
         BufferedImage img = rawImg.getSubimage(0, 0, Math.min(rawImg.getWidth(), displayInfo.getWidth()),

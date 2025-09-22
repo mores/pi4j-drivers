@@ -1,8 +1,8 @@
 package com.pi4j.drivers.display.graphics.st7789;
 
 import com.pi4j.context.Context;
-import com.pi4j.drivers.display.graphics.AbstractDisplayDriverTest;
-import com.pi4j.drivers.display.graphics.DisplayDriver;
+import com.pi4j.drivers.display.graphics.AbstractGraphicsDisplayDriverTest;
+import com.pi4j.drivers.display.graphics.GraphicsDisplayDriver;
 import com.pi4j.drivers.display.graphics.PixelFormat;
 import com.pi4j.io.gpio.digital.DigitalOutput;
 import com.pi4j.io.gpio.digital.DigitalOutputConfigBuilder;
@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Assumptions;
 /**
  * This test assumes the waveshare 1.3inch IPS display HAT pinout, see https://www.waveshare.com/1.3inch-lcd-hat.htm
  */
-public class St7789DriverTest extends AbstractDisplayDriverTest {
+public class St7789DriverTest extends AbstractGraphicsDisplayDriverTest {
     private static final int BACKLIGHT_ADDRESS = 24;
     private static final int DC_ADDRESS = 25;
     private static final int SPI_BAUDRATE = 62_500_000;
@@ -22,7 +22,7 @@ public class St7789DriverTest extends AbstractDisplayDriverTest {
     private static final int SPI_ADDRESS = 0;
 
     @Override
-    public DisplayDriver createDriver(Context pi4j) {
+    public GraphicsDisplayDriver createDriver(Context pi4j) {
         try {
             DigitalOutput bl = pi4j
                     .create(DigitalOutputConfigBuilder.newInstance(pi4j).address(BACKLIGHT_ADDRESS).build());

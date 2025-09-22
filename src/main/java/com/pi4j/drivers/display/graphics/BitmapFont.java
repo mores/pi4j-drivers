@@ -120,7 +120,7 @@ public class BitmapFont {
      * <p>
      * Returns the width of the rendered text in pixel.
      */
-    public int renderText(BaseDisplayComponent display, int x, int baselineY, String text, int color) {
+    public int renderText(GraphicsDisplay display, int x, int baselineY, String text, int color) {
         return renderText(display, x, baselineY, text, color, EnumSet.noneOf(Option.class), 1, 1);
     }
 
@@ -130,7 +130,7 @@ public class BitmapFont {
      * Returns the width of the rendered text in pixel.
      */
     public int renderText(
-            BaseDisplayComponent display,
+            GraphicsDisplay display,
             int x,
             int baselineY,
             String text,
@@ -155,7 +155,7 @@ public class BitmapFont {
      * Returns the width of the character in pixel.
      */
     public int renderCharacter(
-            BaseDisplayComponent display,
+            GraphicsDisplay display,
             int x0,
             int baselineY,
             int codepoint,

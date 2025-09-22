@@ -1,8 +1,8 @@
 package com.pi4j.drivers.display.graphics;
 
-public interface DisplayDriver {
+public interface GraphicsDisplayDriver {
 
-    DisplayInfo getDisplayInfo();
+    GraphicsDisplayInfo getDisplayInfo();
 
     void setPixels(int x, int y, int width, int height, byte[] data);
 }

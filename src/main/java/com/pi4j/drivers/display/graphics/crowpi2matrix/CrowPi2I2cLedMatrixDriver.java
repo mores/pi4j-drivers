@@ -1,8 +1,8 @@
 package com.pi4j.drivers.display.graphics.crowpi2matrix;
 
 import com.pi4j.context.Context;
-import com.pi4j.drivers.display.graphics.DisplayDriver;
-import com.pi4j.drivers.display.graphics.DisplayInfo;
+import com.pi4j.drivers.display.graphics.GraphicsDisplayDriver;
+import com.pi4j.drivers.display.graphics.GraphicsDisplayInfo;
 import com.pi4j.drivers.display.graphics.PixelFormat;
 import com.pi4j.io.i2c.I2C;
 
@@ -13,10 +13,10 @@ import java.util.Arrays;
 /**
  * Driver for the new I2C based CrowPi2 LED matrix that is used in the Pi5-compatible model.
  */
-public class CrowPi2I2cLedMatrixDriver implements DisplayDriver {
+public class CrowPi2I2cLedMatrixDriver implements GraphicsDisplayDriver {
     public static final int I2C_ADDRESS = 0x66;
 
-    private final DisplayInfo displayInfo = new DisplayInfo(8, 8, PixelFormat.RGB_888);
+    private final GraphicsDisplayInfo displayInfo = new GraphicsDisplayInfo(8, 8, PixelFormat.RGB_888);
     private final I2C i2c;
     byte[] writeBuf = new byte[Offset.values().length];
 
@@ -35,7 +35,7 @@ public class CrowPi2I2cLedMatrixDriver implements DisplayDriver {
     }
 
     @Override
-    public DisplayInfo getDisplayInfo() {
+    public GraphicsDisplayInfo getDisplayInfo() {
         return displayInfo;
     }
 

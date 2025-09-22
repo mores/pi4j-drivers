@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.EnumSet;
 import java.util.Random;
 
-public abstract class AbstractDisplayDriverTest {
+public abstract class AbstractGraphicsDisplayDriverTest {
     private Context pi4j;
 
     @BeforeEach
@@ -24,13 +24,13 @@ public abstract class AbstractDisplayDriverTest {
         pi4j.shutdown();
     }
 
-    public abstract DisplayDriver createDriver(Context pi4j);
+    public abstract GraphicsDisplayDriver createDriver(Context pi4j);
 
     @Test
     public void testFillRect() throws InterruptedException {
-        DisplayDriver driver = createDriver(pi4j);
-        BaseDisplayComponent display = new BaseDisplayComponent(driver);
-        DisplayInfo displayInfo = driver.getDisplayInfo();
+        GraphicsDisplayDriver driver = createDriver(pi4j);
+        GraphicsDisplay display = new GraphicsDisplay(driver);
+        GraphicsDisplayInfo displayInfo = driver.getDisplayInfo();
         int width = displayInfo.getWidth();
         int height = displayInfo.getHeight();
         display.fillRect(0, 0, width, height, 0x0);
@@ -49,9 +49,9 @@ public abstract class AbstractDisplayDriverTest {
 
     @Test
     public void testBitmapFont() throws InterruptedException {
-        DisplayDriver driver = createDriver(pi4j);
-        BaseDisplayComponent display = new BaseDisplayComponent(driver);
-        DisplayInfo displayInfo = driver.getDisplayInfo();
+        GraphicsDisplayDriver driver = createDriver(pi4j);
+        GraphicsDisplay display = new GraphicsDisplay(driver);
+        GraphicsDisplayInfo displayInfo = driver.getDisplayInfo();
         int width = displayInfo.getWidth();
         int height = displayInfo.getHeight();
         display.fillRect(0, 0, width, height, 0);

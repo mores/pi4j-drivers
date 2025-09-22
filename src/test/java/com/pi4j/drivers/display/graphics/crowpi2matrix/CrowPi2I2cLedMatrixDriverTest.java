@@ -1,13 +1,13 @@
 package com.pi4j.drivers.display.graphics.crowpi2matrix;
 
 import com.pi4j.context.Context;
-import com.pi4j.drivers.display.graphics.AbstractDisplayDriverTest;
-import com.pi4j.drivers.display.graphics.DisplayDriver;
+import com.pi4j.drivers.display.graphics.AbstractGraphicsDisplayDriverTest;
+import com.pi4j.drivers.display.graphics.GraphicsDisplayDriver;
 import org.junit.jupiter.api.Assumptions;
 
-public class CrowPi2I2cLedMatrixDriverTest extends AbstractDisplayDriverTest {
+public class CrowPi2I2cLedMatrixDriverTest extends AbstractGraphicsDisplayDriverTest {
     @Override
-    public DisplayDriver createDriver(Context pi4j) {
+    public GraphicsDisplayDriver createDriver(Context pi4j) {
         try {
             return new CrowPi2I2cLedMatrixDriver(pi4j);
         } catch (RuntimeException e) {
