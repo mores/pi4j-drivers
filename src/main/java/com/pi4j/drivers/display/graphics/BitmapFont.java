@@ -20,7 +20,7 @@ public class BitmapFont {
 
     // To expand supported bitmap sizes and reduce memory, perhaps change this to an interleaved int array with binary
     // search for character lookup.
-    private Map<Integer, Long> codePoints = new HashMap<>();
+    private final Map<Integer, Long> codePoints = new HashMap<>();
 
     public void addCharacter(int codePoint, long bitmap) {
         codePoints.put(codePoint, bitmap);
@@ -54,7 +54,7 @@ public class BitmapFont {
     }
 
     /**
-     * Constructs an empty BitmapFont with the given character cell size and bit width.
+     * Constructs an empty BitmapFont with the given character cell size and bit-width.
      * The bit width can be used to byte-align character bitmap rows. The leading bit difference between the
      * bit width and the character width will remain unused.
      */
@@ -117,14 +117,17 @@ public class BitmapFont {
 
     /**
      * Renders a text string at the given position with the given color.
+     * <p>
+     * Returns the width of the rendered text in pixel.
      */
     public int renderText(BaseDisplayComponent display, int x, int baselineY, String text, int color) {
         return renderText(display, x, baselineY, text, color, EnumSet.noneOf(Option.class), 1, 1);
     }
 
     /**
-     * Renders a text string at the given position with the given color and flags. Returns the width
-     * of the rendered text.
+     * Renders a text string at the given position with the given color and flags.
+     * <p>
+     * Returns the width of the rendered text in pixel.
      */
     public int renderText(
             BaseDisplayComponent display,
@@ -147,7 +150,9 @@ public class BitmapFont {
     }
 
     /**
-     * Renders a single character at the given position; returns the width of the character.
+     * Renders a single character at the given position.
+     * <p>
+     * Returns the width of the character in pixel.
      */
     public int renderCharacter(
             BaseDisplayComponent display,
