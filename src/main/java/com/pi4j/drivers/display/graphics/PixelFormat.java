@@ -79,20 +79,43 @@ public enum PixelFormat {
      * @param srcRgb
      *            The source array with rgb values in 24 bit integers.
      * @param srcOffset
-     *            The start offset in the soruce array
+     *            The start offset in the source array
      * @param dst
      *            The destination buffer.
      * @param dstBitOffset
-     *            The bit offset in the desitination buffer.
+     *            The bit offset in the destination buffer.
      * @param pixelCount
      *            The number of pixels to be transferred.
      *
      * @return The number of bits written.
      */
     int writeRgb(int[] srcRgb, int srcOffset, byte[] dst, int dstBitOffset, int pixelCount) {
+        return writeRgb(srcRgb, srcOffset, 1, dst, dstBitOffset, pixelCount);
+    }
+
+    /**
+     * Writes 24 bit integer RGB values from srcRgb to dst in "this" pixel format.
+     *
+     * @param srcRgb
+     *            The source array with rgb values in 24 bit integers.
+     * @param srcOffset
+     *            The start offset in the source array
+     * @param srcStride
+     *            The value to add to the start offset after each pixel.
+     * @param dst
+     *            The destination buffer.
+     * @param dstBitOffset
+     *            The bit offset in the destination buffer.
+     * @param pixelCount
+     *            The number of pixels to be transferred.
+     *
+     * @return The number of bits written.
+     */
+     int writeRgb(int[] srcRgb, int srcOffset, int srcStride, byte[] dst, int dstBitOffset, int pixelCount) {
         int bitsWritten = 0;
         for (int i = 0; i < pixelCount; i++) {
-            bitsWritten += writeRgb(srcRgb[srcOffset + i], dst, dstBitOffset + bitsWritten);
+            bitsWritten += writeRgb(srcRgb[srcOffset], dst, dstBitOffset + bitsWritten);
+            srcOffset += srcStride;
         }
         return bitsWritten;
     }
