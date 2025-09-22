@@ -1,13 +1,6 @@
 package com.pi4j.drivers.display.graphics;
 
-import java.util.HexFormat;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class FakeDisplayDriver implements DisplayDriver {
-
-    private static Logger log = LoggerFactory.getLogger(FakeDisplayDriver.class);
 
     private byte[] data;
     private DisplayInfo displayInfo;
@@ -29,9 +22,6 @@ public class FakeDisplayDriver implements DisplayDriver {
 
     @Override
     public void setPixels(int x, int y, int width, int height, byte[] data) {
-        log.trace("setPixels: {} {} {} {}", x, y, width, height);
-        log.trace("\t" + HexFormat.of().formatHex(data));
-
         if (x < 0 || x + width > displayInfo.getWidth()) {
             throw new IllegalArgumentException(
                     "x " + x + " + width " + width + " exceeds display width " + displayInfo.getWidth());

@@ -7,9 +7,6 @@ import java.util.Arrays;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class BaseDisplayComponentTest {
 
     // 12 bit test
