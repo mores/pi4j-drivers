@@ -4,11 +4,11 @@ import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class BaseDisplayComponent {
+public class GraphicsDisplay {
     // TODO(https://github.com/Pi4J/pi4j/issues/475): Remove or update this limitation.
     private static final int MAX_TRANSFER_SIZE = 4000;
 
-    protected final DisplayDriver driver;
+    protected final GraphicsDisplayDriver driver;
     private final Object lock = new Object();
     private final int[] displayBuffer;
     private final byte[] transferBuffer;
@@ -23,7 +23,7 @@ public class BaseDisplayComponent {
     private final int displayWidth;
     private final int displayHeight;
 
-    public BaseDisplayComponent(DisplayDriver driver) {
+    public GraphicsDisplay(GraphicsDisplayDriver driver) {
         this.driver = driver;
         displayWidth = driver.getDisplayInfo().getWidth();
         displayHeight = driver.getDisplayInfo().getHeight();

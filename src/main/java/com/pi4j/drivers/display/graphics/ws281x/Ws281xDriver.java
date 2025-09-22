@@ -1,7 +1,7 @@
 package com.pi4j.drivers.display.graphics.ws281x;
 
-import com.pi4j.drivers.display.graphics.DisplayDriver;
-import com.pi4j.drivers.display.graphics.DisplayInfo;
+import com.pi4j.drivers.display.graphics.GraphicsDisplayDriver;
+import com.pi4j.drivers.display.graphics.GraphicsDisplayInfo;
 import com.pi4j.drivers.display.graphics.PixelFormat;
 import com.pi4j.io.spi.Spi;
 
@@ -12,7 +12,7 @@ import com.pi4j.io.spi.Spi;
  * This driver is based on timing information form this article:
  * https://wp.josh.com/2014/05/13/ws2812-neopixels-are-not-so-finicky-once-you-get-to-know-them/
  */
-public class Ws281xDriver implements DisplayDriver {
+public class Ws281xDriver implements GraphicsDisplayDriver {
     /** The number of color channels (r, g, b); each using one byte. */
     private static final int COLOR_CHANNELS = 3;
     /**
@@ -27,7 +27,7 @@ public class Ws281xDriver implements DisplayDriver {
 
     /** A buffer of the transformed pixels in the format they will be sent over SPI */
     private final byte[] spiBuffer;
-    private final DisplayInfo displayInfo;
+    private final GraphicsDisplayInfo displayInfo;
     private final Spi spi;
 
     /**
@@ -39,11 +39,11 @@ public class Ws281xDriver implements DisplayDriver {
     public Ws281xDriver(Spi spi, int width, int height) {
         this.spi = spi;
         spiBuffer = new byte[width * height * COLOR_CHANNELS * BIT_STRETCH];
-        displayInfo = new DisplayInfo(width, height, PixelFormat.RGB_888);
+        displayInfo = new GraphicsDisplayInfo(width, height, PixelFormat.RGB_888);
     }
 
     @Override
-    public DisplayInfo getDisplayInfo() {
+    public GraphicsDisplayInfo getDisplayInfo() {
         return displayInfo;
     }
 

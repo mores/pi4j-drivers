@@ -1,11 +1,11 @@
 package com.pi4j.drivers.display.graphics;
 
-public class FakeDisplayDriver implements DisplayDriver {
+public class FakeGraphicsDisplayDriver implements GraphicsDisplayDriver {
 
     private byte[] data;
-    private DisplayInfo displayInfo;
+    private GraphicsDisplayInfo displayInfo;
 
-    public FakeDisplayDriver(DisplayInfo displayInfo) {
+    public FakeGraphicsDisplayDriver(GraphicsDisplayInfo displayInfo) {
         this.displayInfo = displayInfo;
         this.data = new byte[(displayInfo.getWidth() * displayInfo.getHeight()
                 * displayInfo.getPixelFormat().getBitCount() + 7) / 8];
@@ -16,7 +16,7 @@ public class FakeDisplayDriver implements DisplayDriver {
     }
 
     @Override
-    public DisplayInfo getDisplayInfo() {
+    public GraphicsDisplayInfo getDisplayInfo() {
         return displayInfo;
     }
 
