@@ -21,8 +21,7 @@ public class Scd4xDriverTest {
 
     @Test
     public void testBasicMeasurementWorks() {
-        try (Scd4xDriver driver = createInitializedDriver()) {
-
+        try (Scd4xDriver driver = createDriver()) {
             assertEquals(Mode.IDLE, driver.getMode());
 
             driver.startPeriodicMeasurement();
@@ -45,7 +44,7 @@ public class Scd4xDriverTest {
     }
 
 
-    Scd4xDriver createInitializedDriver() {
+    Scd4xDriver createDriver() {
         try (I2C i2c = pi4j.create(I2CConfigBuilder.newInstance(pi4j).bus(BUS).device(Scd4xDriver.I2C_ADDRESS));
              Scd4xDriver driver = new Scd4xDriver(i2c)) {
             return driver;
