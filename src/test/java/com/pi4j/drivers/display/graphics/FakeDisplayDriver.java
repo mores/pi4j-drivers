@@ -47,9 +47,10 @@ public class FakeDisplayDriver implements DisplayDriver {
         checkAlignment(width, "width");
 
         for (int i = 0; i < height; i++) {
-            System.arraycopy(data, (i * width * pixelFormat.getBitCount() + 7) / 8, this.data,
-                    ((i + y) * getDisplayInfo().getWidth() * pixelFormat.getBitCount() + x + 7) / 8,
-                    (width * pixelFormat.getBitCount() + 7) / 8);
+            int srcPos = (i * width * pixelFormat.getBitCount() + 7) / 8;
+            int dstPos = (((i + y) * getDisplayInfo().getWidth() + x) * pixelFormat.getBitCount() + 7) / 8;
+            int count = (width * pixelFormat.getBitCount() + 7) / 8;
+            System.arraycopy(data, srcPos, this.data, dstPos, count);
         }
     }
 
