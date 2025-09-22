@@ -3,7 +3,6 @@ package com.pi4j.drivers.sensor.scd4x;
 import com.pi4j.io.i2c.I2C;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
