@@ -18,7 +18,7 @@ public class BaseDisplayComponent {
     private int modifiedXMin = Integer.MAX_VALUE;
     private int modifiedYMax = Integer.MIN_VALUE;
     private int modifiedYMin = Integer.MAX_VALUE;
-    private boolean updatePending = false;
+    private TimerTask pendingUpdate = null;
     private int transferDelayMillis = 20;
     private final int displayWidth;
     private final int displayHeight;
@@ -75,7 +75,7 @@ public class BaseDisplayComponent {
                 return;
             }
             displayBuffer[pixelAddress(x, y)] = color;
-            markModified(x, y, 1, 1);
+            markModified(x, y, x + 1, y + 1);
         }
     }
 
@@ -97,14 +97,14 @@ public class BaseDisplayComponent {
             modifiedYMax = Math.max(modifiedYMax, yMax);
             if (transferDelayMillis == 0) {
                 flush();
-            } else if (!updatePending && transferDelayMillis > 0) {
-                updatePending = true;
-                timer.schedule(new TimerTask() {
+            } else if (pendingUpdate == null && transferDelayMillis > 0) {
+                pendingUpdate = new TimerTask() {
                     @Override
                     public void run() {
-                        updatePending = false;
+                        pendingUpdate = null;
                         flush();
-                    }}, transferDelayMillis);
+                    }};
+                timer.schedule(pendingUpdate, transferDelayMillis);
             }
         }
     }

@@ -1,13 +1,6 @@
 package com.pi4j.drivers.display.graphics;
 
-import java.util.HexFormat;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class FakeDisplayDriver implements DisplayDriver {
-
-    private static Logger log = LoggerFactory.getLogger(FakeDisplayDriver.class);
 
     private byte[] data;
     private DisplayInfo displayInfo;
@@ -29,9 +22,6 @@ public class FakeDisplayDriver implements DisplayDriver {
 
     @Override
     public void setPixels(int x, int y, int width, int height, byte[] data) {
-        log.trace("setPixels: {} {} {} {}", x, y, width, height);
-        log.trace("\t" + HexFormat.of().formatHex(data));
-
         if (x < 0 || x + width > displayInfo.getWidth()) {
             throw new IllegalArgumentException(
                     "x " + x + " + width " + width + " exceeds display width " + displayInfo.getWidth());
@@ -47,9 +37,10 @@ public class FakeDisplayDriver implements DisplayDriver {
         checkAlignment(width, "width");
 
         for (int i = 0; i < height; i++) {
-            System.arraycopy(data, (i * width * pixelFormat.getBitCount() + 7) / 8, this.data,
-                    ((i + y) * getDisplayInfo().getWidth() * pixelFormat.getBitCount() + x + 7) / 8,
-                    (width * pixelFormat.getBitCount() + 7) / 8);
+            int srcPos = (i * width * pixelFormat.getBitCount() + 7) / 8;
+            int dstPos = (((i + y) * getDisplayInfo().getWidth() + x) * pixelFormat.getBitCount() + 7) / 8;
+            int count = (width * pixelFormat.getBitCount() + 7) / 8;
+            System.arraycopy(data, srcPos, this.data, dstPos, count);
         }
     }
 
