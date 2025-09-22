@@ -23,7 +23,7 @@ public class BaseDisplayComponentTest {
         byte[] data = driver.getData();
 
         assertEquals((byte) 0xF0, data[0]);
-        assertEquals(100 * 100 * 2, data.length);
+        assertEquals(100 * 100 * 3 / 2, data.length);
     }
 
     // 16 bit test
