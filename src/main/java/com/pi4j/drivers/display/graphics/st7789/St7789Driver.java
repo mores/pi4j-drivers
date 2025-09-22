@@ -10,12 +10,16 @@ import com.pi4j.io.spi.Spi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.EnumSet;
+
 /*
  * Tested on Adafruit 1.54" 240x240 Wide Angle TFT LCD Display with MicroSD - ST7789 with EYESPI Connector
  * https://www.adafruit.com/product/3787
  */
 
 public class St7789Driver implements GraphicsDisplayDriver {
+
+    public static final EnumSet<PixelFormat> SUPPORTED_PIXEL_FORMATS = EnumSet.of(PixelFormat.RGB_444, PixelFormat.RGB_565);
 
     private static Logger log = LoggerFactory.getLogger(St7789Driver.class);
     private final static int WIDTH = 240;

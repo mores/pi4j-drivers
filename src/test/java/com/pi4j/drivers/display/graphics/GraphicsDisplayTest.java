@@ -11,7 +11,7 @@ public class GraphicsDisplayTest {
     // 12 bit test
     @Test
     public void testRgb888toRgb444() throws IOException {
-        FakeGraphicsDisplayDriver driver = new FakeGraphicsDisplayDriver(new GraphicsDisplayInfo(100, 100, PixelFormat.RGB_444));
+        FakeGraphicsDisplayDriver driver = new FakeGraphicsDisplayDriver(100, 100, PixelFormat.RGB_444);
         GraphicsDisplay display = new GraphicsDisplay(driver);
         display.fillRect(0, 0, 48, 1, Color.RED.getRGB());
         display.flush();
@@ -25,7 +25,7 @@ public class GraphicsDisplayTest {
     // 16 bit test
     @Test
     public void testRgb888toRgb565() throws IOException {
-        FakeGraphicsDisplayDriver driver = new FakeGraphicsDisplayDriver(new GraphicsDisplayInfo(100, 100, PixelFormat.RGB_565));
+        FakeGraphicsDisplayDriver driver = new FakeGraphicsDisplayDriver(100, 100, PixelFormat.RGB_565);
         GraphicsDisplay display = new GraphicsDisplay(driver);
         display.setTransferDelayMillis(0);
         display.fillRect(0, 0, 48, 1, Color.RED.getRGB());
@@ -38,7 +38,7 @@ public class GraphicsDisplayTest {
 
     @Test
     public void testSetPixel() {
-        FakeGraphicsDisplayDriver driver = new FakeGraphicsDisplayDriver(new GraphicsDisplayInfo(100, 100, PixelFormat.RGB_888));
+        FakeGraphicsDisplayDriver driver = new FakeGraphicsDisplayDriver(100, 100, PixelFormat.RGB_888);
         GraphicsDisplay display = new GraphicsDisplay(driver);
         display.setTransferDelayMillis(0);
         display.setPixel(10, 10, 0x112233);

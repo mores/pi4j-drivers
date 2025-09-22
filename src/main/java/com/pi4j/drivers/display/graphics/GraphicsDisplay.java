@@ -121,8 +121,13 @@ public class GraphicsDisplay {
     /** Transfers the given display buffer area to the display driver */
     private void transferBuffer(int xMin, int yMin, int xMax, int yMax) {
         synchronized (lock) {
+            int xGranularity = driver.getDisplayInfo().getXGranularity();
+            xMin = (xMin / xGranularity) * xGranularity;
+            xMax = ((xMax + xGranularity - 1) / xGranularity) * xGranularity;
+
             int width = xMax - xMin;
             int height = yMax - yMin;
+
             PixelFormat pixelFormat = driver.getDisplayInfo().getPixelFormat();
             int bitsPerRow = width * pixelFormat.getBitCount();
             int bitOffset = 0;
