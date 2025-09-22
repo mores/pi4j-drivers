@@ -1,4 +1,4 @@
-package com.pi4j.drivers.display.text.hd44780;
+package com.pi4j.drivers.display.character.hd44780;
 
 import com.pi4j.Pi4J;
 import com.pi4j.context.Context;
@@ -46,10 +46,10 @@ public class Hd44780DriverTest {
         try {
             I2C i2c = pi4j.create(I2C.newConfigBuilder(pi4j)
                     .bus(BUS)
-                    .device(0x21) //DEVICE_ADDRESS)
+                    .device(DEVICE_ADDRESS)
                     .build());
 
-            return Hd44780Driver.withMcp23008Connection(i2c, 16, 2);
+            return Hd44780Driver.withPcf8574Connection(i2c, 16, 2);
         } catch (RuntimeException e) {
             e.printStackTrace();
             // TODO(https://github.com/Pi4J/pi4j/issues/489): Catch Pi4j exceptions instead.

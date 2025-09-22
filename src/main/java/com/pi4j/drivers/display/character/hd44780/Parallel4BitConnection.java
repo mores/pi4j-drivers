@@ -1,4 +1,4 @@
-package com.pi4j.drivers.display.text.hd44780;
+package com.pi4j.drivers.display.character.hd44780;
 
 import com.pi4j.io.OnOffWrite;
 
