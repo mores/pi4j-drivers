@@ -2,13 +2,18 @@ package com.pi4j.drivers.display.graphics;
 
 public class FakeGraphicsDisplayDriver implements GraphicsDisplayDriver {
 
-    private byte[] data;
-    private GraphicsDisplayInfo displayInfo;
+    private final byte[] data;
+    private final GraphicsDisplayInfo displayInfo;
 
-    public FakeGraphicsDisplayDriver(GraphicsDisplayInfo displayInfo) {
-        this.displayInfo = displayInfo;
+    public FakeGraphicsDisplayDriver(int width, int height, PixelFormat pixelFormat) {
+        int xGranularity = 1;
+        while ((xGranularity * pixelFormat.getBitCount()) % 8 != 0) {
+            xGranularity *= 2;
+        }
+        this.displayInfo = new GraphicsDisplayInfo(width, height, pixelFormat, xGranularity);
         this.data = new byte[(displayInfo.getWidth() * displayInfo.getHeight()
                 * displayInfo.getPixelFormat().getBitCount() + 7) / 8];
+        checkAlignment(width, "Display width");
     }
 
     public byte[] getData() {
@@ -45,7 +50,7 @@ public class FakeGraphicsDisplayDriver implements GraphicsDisplayDriver {
     }
 
     private void checkAlignment(int x, String target) {
-        if (x * displayInfo.getPixelFormat().getBitCount() % 8 != 0) {
+        if ((x * displayInfo.getPixelFormat().getBitCount()) % 8 != 0) {
             throw new IllegalArgumentException("misaligned for " + target + " -- must be aligned on byte address");
         }
     }

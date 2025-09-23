@@ -27,7 +27,7 @@ public class AwtGraphicsDisplayTest {
     @Test
     public void testRgb888toRgb444() throws IOException {
 
-        FakeGraphicsDisplayDriver display = new FakeGraphicsDisplayDriver(new GraphicsDisplayInfo(10, 10, PixelFormat.RGB_444));
+        FakeGraphicsDisplayDriver display = new FakeGraphicsDisplayDriver(10, 10, PixelFormat.RGB_444);
         AwtGraphicsDisplay mockDisplay = new AwtGraphicsDisplay(display);
         mockDisplay.setTransferDelayMillis(0);
 
@@ -50,7 +50,7 @@ public class AwtGraphicsDisplayTest {
     @Test
     public void testRgb888toRgb565() throws IOException {
 
-        FakeGraphicsDisplayDriver display = new FakeGraphicsDisplayDriver(new GraphicsDisplayInfo(10, 10, PixelFormat.RGB_565));
+        FakeGraphicsDisplayDriver display = new FakeGraphicsDisplayDriver(10, 10, PixelFormat.RGB_565);
         AwtGraphicsDisplay mockDisplay = new AwtGraphicsDisplay(display);
         mockDisplay.setTransferDelayMillis(0);
 
@@ -72,7 +72,7 @@ public class AwtGraphicsDisplayTest {
     @Test
     public void testDisplayDataBufferInt444() {
 
-        FakeGraphicsDisplayDriver display = new FakeGraphicsDisplayDriver(new GraphicsDisplayInfo(10, 10, PixelFormat.RGB_444));
+        FakeGraphicsDisplayDriver display = new FakeGraphicsDisplayDriver(10, 10, PixelFormat.RGB_444);
         AwtGraphicsDisplay mockDisplay = new AwtGraphicsDisplay(display);
         mockDisplay.setTransferDelayMillis(0);
 
@@ -89,7 +89,7 @@ public class AwtGraphicsDisplayTest {
     @Test
     public void testDisplayDataBufferInt565() {
 
-        FakeGraphicsDisplayDriver display = new FakeGraphicsDisplayDriver(new GraphicsDisplayInfo(10, 10, PixelFormat.RGB_565));
+        FakeGraphicsDisplayDriver display = new FakeGraphicsDisplayDriver(10, 10, PixelFormat.RGB_565);
         AwtGraphicsDisplay mockDisplay = new AwtGraphicsDisplay(display);
         mockDisplay.setTransferDelayMillis(0);
 

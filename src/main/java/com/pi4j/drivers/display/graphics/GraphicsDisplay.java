@@ -19,7 +19,7 @@ public class GraphicsDisplay {
     private int modifiedYMax = Integer.MIN_VALUE;
     private int modifiedYMin = Integer.MAX_VALUE;
     private TimerTask pendingUpdate = null;
-    private int transferDelayMillis = 20;
+    private int transferDelayMillis = 15;
     private final int displayWidth;
     private final int displayHeight;
 
@@ -50,6 +50,23 @@ public class GraphicsDisplay {
                         displayBuffer,
                         pixelAddress(xMin, targetY),
                         xMax - xMin);
+            }
+            markModified(xMin, yMin, xMax, yMax);
+        }
+    }
+
+    public void fillRect(int x, int y, int width, int height, int rgb888) {
+        synchronized (lock) {
+            int xMin = Math.max(0, x);
+            int yMin = Math.max(0, y);
+            int xMax = Math.min(x + width, displayWidth);
+            int yMax = Math.min(y + height, displayHeight);
+            if (xMax <= xMin || yMax <= yMin) {
+                return;
+            }
+            for (int targetY = yMin; targetY < yMax; targetY++) {
+                int start = pixelAddress(xMin, targetY);
+                Arrays.fill(displayBuffer, start, start + xMax - xMin, rgb888);
             }
             markModified(xMin, yMin, xMax, yMax);
         }
@@ -88,6 +105,10 @@ public class GraphicsDisplay {
         this.transferDelayMillis = millis;
     }
 
+    // Private methods. Note that internally
+    // - we assume coordinates are in range while we account for out-of-bounds coordinates in user methods.
+    // - we use min/max coordinate bounds instead of width/height as in user methods.
+
     /** Marks the given screen area as modified */
     private void markModified(int xMin, int yMin, int xMax, int yMax) {
         synchronized (lock) {
@@ -109,10 +130,6 @@ public class GraphicsDisplay {
         }
     }
 
-    // Private methods. Note that internally
-    // - we assume coordinates are in range while we account for out-of-bounds coordinates in user methods.
-    // - we use min/max coordinate bounds instead of width/height as in user methods.
-
     /** Returns the address of the given pixel in the display buffer */
     private int pixelAddress(int x, int y) {
         return y * driver.getDisplayInfo().getWidth() + x;
@@ -121,8 +138,13 @@ public class GraphicsDisplay {
     /** Transfers the given display buffer area to the display driver */
     private void transferBuffer(int xMin, int yMin, int xMax, int yMax) {
         synchronized (lock) {
+            int xGranularity = driver.getDisplayInfo().getXGranularity();
+            xMin = (xMin / xGranularity) * xGranularity;
+            xMax = ((xMax + xGranularity - 1) / xGranularity) * xGranularity;
+
             int width = xMax - xMin;
             int height = yMax - yMin;
+
             PixelFormat pixelFormat = driver.getDisplayInfo().getPixelFormat();
             int bitsPerRow = width * pixelFormat.getBitCount();
             int bitOffset = 0;
@@ -142,22 +164,4 @@ public class GraphicsDisplay {
             }
         }
     }
-
-    public void fillRect(int x, int y, int width, int height, int rgb888) {
-        synchronized (lock) {
-            int xMin = Math.max(0, x);
-            int yMin = Math.max(0, y);
-            int xMax = Math.min(x + width, displayWidth);
-            int yMax = Math.min(y + height, displayHeight);
-            if (xMax <= xMin || yMax <= yMin) {
-                return;
-            }
-            for (int targetY = yMin; targetY < yMax; targetY++) {
-                int start = pixelAddress(xMin, targetY);
-                Arrays.fill(displayBuffer, start, start + xMax - xMin, rgb888);
-            }
-            markModified(xMin, yMin, xMax, yMax);
-        }
-    }
-
 }
