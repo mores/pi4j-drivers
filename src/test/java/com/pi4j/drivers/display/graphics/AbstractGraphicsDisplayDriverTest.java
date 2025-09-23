@@ -4,11 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.pi4j.Pi4J;
 import com.pi4j.context.Context;
+import com.pi4j.drivers.display.BitmapFont;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.EnumSet;
 import java.util.Random;
 
 public abstract class AbstractGraphicsDisplayDriverTest {
@@ -56,14 +56,15 @@ public abstract class AbstractGraphicsDisplayDriverTest {
         int height = displayInfo.getHeight();
         display.fillRect(0, 0, width, height, 0);
 
-        BitmapFont font = BitmapFont.getLcdFont();
+        BitmapFont font = BitmapFont.get5x8Font();
+        BitmapFont proportionalFont = BitmapFont.get5x8Font(BitmapFont.Option.PROPORTIONAL);
 
-        int textWidth = font.renderText(display, 10, 20, "Hello Pi4J Monospaced", 0xff8888);
+        int textWidth = display.renderText(10, 20, "Hello Pi4J Monospaced", font, 0xff8888);
         assertEquals("Hello Pi4J Monospaced".length() * 6, textWidth);
 
-        font.renderText(display, 10, 42, "Hello Pi4J 2x", 0x88ff88, EnumSet.of(BitmapFont.Option.PROPORTIONAL), 2, 2);
-        font.renderText(display, 10, 75, "Hello Pi4J 3x", 0x8888ff, EnumSet.of(BitmapFont.Option.PROPORTIONAL), 3, 3);
-        font.renderText(display, 10, 120, "Hello Pi4J", 0xffff00, EnumSet.of(BitmapFont.Option.PROPORTIONAL), 4, 4);
+        display.renderText(10, 42, "Hello Pi4J 2x", proportionalFont, 0x88ff88, 2, 2);
+        display.renderText(10, 75, "Hello Pi4J 3x", proportionalFont, 0x8888ff, 3, 3);
+        display.renderText(10, 120, "Hello Pi4J", proportionalFont, 0xffff00, 4, 4);
 
         display.flush(); // Make sure we don't get writes later.
     }
