@@ -22,12 +22,12 @@ public class BitmapFont {
     // search for character lookup.
     private final Map<Integer, Glyph> codepoints = new HashMap<>();
 
-    public void addCharacter(int codePoint, long bitmap) {
-        codepoints.put(codePoint, new Glyph(cellWidth, bitmap));
+    public void addCharacter(int codepoint, long bitmap) {
+        addCharacter(codepoint, cellWidth, bitmap);
     }
 
-    public void addCharacter(int codePoint, int width, long bitmap) {
-        codepoints.put(codePoint, new Glyph(width, bitmap));
+    public void addCharacter(int codepoint, int width, long bitmap) {
+        codepoints.put(codepoint, new Glyph(width, bitmap));
     }
 
     /** Adds bitmaps for a set of subsequent codepoints. */
@@ -104,7 +104,7 @@ public class BitmapFont {
         return codepoints.get(codepoint);
     }
 
-    private BitmapFont toProportional() {
+    public BitmapFont toProportional() {
         BitmapFont result = new BitmapFont(cellWidth, cellHeight);
         for (Map.Entry<Integer, Glyph> entry : font5x8.codepoints.entrySet()) {
             result.codepoints.put(entry.getKey(), entry.getValue().toProportional());
@@ -310,6 +310,7 @@ public class BitmapFont {
                     0b00000_11111_10001_10000_11110_10001_10001_11110L); // 
     }
 
+    /** A glyph, containing the bitmap for a character. */
     public class Glyph {
         private final int width;
         private final long bitmap;
@@ -319,15 +320,22 @@ public class BitmapFont {
             this.bitmap = bitmap;
         }
 
+        /** Returns true if the pixel at the given coordinate in character space is set. */
         public boolean getPixel(int x, int y) {
+            // This looks a bit wonky because the bits are written from high to low in the constants.
             int bitAddress = (cellWidth - y) * cellHeight - x - 1;
             return (bitmap & (1L << bitAddress)) != 0;
         }
 
+        /** Returns the width of this character. Should match the cell width for monospaced fonts. */
         public int getWidth() {
             return width;
         }
 
+        /**
+         * Returns a new trimmed glyph with empty columns at the left and right border removed
+         * and the width adjusted accordingly.
+         */
         public Glyph toProportional() {
             if (bitmap == 0) {
                 // Special case (NB)SP.
