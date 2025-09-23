@@ -64,7 +64,8 @@ public abstract class AbstractGraphicsDisplayDriverTest {
 
         display.renderText(10, 50, "Hello Pi4j-gpqy", proportionalFont, 0x88ff88, 2, 2);
         display.renderText(10, 90, "Hello Pi4J 3x", proportionalFont, 0x8888ff, 3, 3);
-        display.renderText(10, 140, "Hello Pi4J", proportionalFont, 0xffff00, 4, 4);
+        display.renderText(10, 140, "Hello Pi4J", proportionalFont, 0xffff88, 4, 4);
+        display.renderText(10, 200, "Hello Pi4J", proportionalFont, 0xff88ff, 4, 6);
 
         display.flush(); // Make sure we don't get writes later.
     }
