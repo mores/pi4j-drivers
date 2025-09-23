@@ -57,14 +57,14 @@ public abstract class AbstractGraphicsDisplayDriverTest {
         display.fillRect(0, 0, width, height, 0);
 
         BitmapFont font = BitmapFont.get5x8Font();
-        BitmapFont proportionalFont = BitmapFont.get5x8Font(BitmapFont.Option.PROPORTIONAL);
+        BitmapFont proportionalFont = BitmapFont.get5x10Font(BitmapFont.Option.PROPORTIONAL);
 
         int textWidth = display.renderText(10, 20, "Hello Pi4J Monospaced", font, 0xff8888);
         assertEquals("Hello Pi4J Monospaced".length() * 6, textWidth);
 
-        display.renderText(10, 42, "Hello Pi4J 2x", proportionalFont, 0x88ff88, 2, 2);
-        display.renderText(10, 75, "Hello Pi4J 3x", proportionalFont, 0x8888ff, 3, 3);
-        display.renderText(10, 120, "Hello Pi4J", proportionalFont, 0xffff00, 4, 4);
+        display.renderText(10, 50, "Hello Pi4j-gpqy", proportionalFont, 0x88ff88, 2, 2);
+        display.renderText(10, 90, "Hello Pi4J 3x", proportionalFont, 0x8888ff, 3, 3);
+        display.renderText(10, 140, "Hello Pi4J", proportionalFont, 0xffff00, 4, 4);
 
         display.flush(); // Make sure we don't get writes later.
     }
