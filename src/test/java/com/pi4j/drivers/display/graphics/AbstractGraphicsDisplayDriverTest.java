@@ -67,4 +67,24 @@ public abstract class AbstractGraphicsDisplayDriverTest {
 
         display.flush(); // Make sure we don't get writes later.
     }
+
+    @Test
+    public void testSetPixel() throws InterruptedException {
+        GraphicsDisplayDriver driver = createDriver(pi4j);
+        GraphicsDisplay display = new GraphicsDisplay(driver);
+        GraphicsDisplayInfo displayInfo = driver.getDisplayInfo();
+        int width = displayInfo.getWidth();
+        int height = displayInfo.getHeight();
+        display.fillRect(0, 0, width, height, java.awt.Color.WHITE.getRGB() );
+        Thread.sleep(100);
+
+        for( int x = 0; x < width; x++ ) {
+            for( int y = 0; y < height; y++ ) {
+                display.setPixel( x, y, java.awt.Color.BLACK.getRGB() );
+                Thread.sleep(1);
+            }
+        }
+
+        display.flush(); // Make sure we don't get writes later.
+    }
 }
