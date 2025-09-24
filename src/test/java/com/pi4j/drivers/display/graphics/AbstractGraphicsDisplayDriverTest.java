@@ -78,13 +78,12 @@ public abstract class AbstractGraphicsDisplayDriverTest {
         int width = displayInfo.getWidth();
         int height = displayInfo.getHeight();
         display.fillRect(0, 0, width, height, java.awt.Color.WHITE.getRGB() );
-        Thread.sleep(100);
 
         for( int x = 0; x < width; x++ ) {
             for( int y = 0; y < height; y++ ) {
                 display.setPixel( x, y, java.awt.Color.BLACK.getRGB() );
-                Thread.sleep(1);
             }
+            Thread.sleep(5);
         }
 
         display.flush(); // Make sure we don't get writes later.
