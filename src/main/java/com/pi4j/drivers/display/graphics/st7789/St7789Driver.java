@@ -1,8 +1,8 @@
-package com.pi4j.drivers.display.st7789;
+package com.pi4j.drivers.display.graphics.st7789;
 
-import com.pi4j.drivers.display.GraphicsDisplayDriver;
-import com.pi4j.drivers.display.PixelFormat;
-import com.pi4j.drivers.display.DisplayInfo;
+import com.pi4j.drivers.display.graphics.GraphicsDisplayDriver;
+import com.pi4j.drivers.display.graphics.PixelFormat;
+import com.pi4j.drivers.display.graphics.GraphicsDisplayInfo;
 
 import com.pi4j.io.gpio.digital.DigitalOutput;
 import com.pi4j.io.spi.Spi;
@@ -10,12 +10,16 @@ import com.pi4j.io.spi.Spi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.EnumSet;
+
 /*
  * Tested on Adafruit 1.54" 240x240 Wide Angle TFT LCD Display with MicroSD - ST7789 with EYESPI Connector
  * https://www.adafruit.com/product/3787
  */
 
 public class St7789Driver implements GraphicsDisplayDriver {
+
+    public static final EnumSet<PixelFormat> SUPPORTED_PIXEL_FORMATS = EnumSet.of(PixelFormat.RGB_444, PixelFormat.RGB_565);
 
     private static Logger log = LoggerFactory.getLogger(St7789Driver.class);
     private final static int WIDTH = 240;
@@ -46,12 +50,12 @@ public class St7789Driver implements GraphicsDisplayDriver {
 
     private final Spi spi;
     private final DigitalOutput dc;
-    private final DisplayInfo displayInfo;
+    private final GraphicsDisplayInfo displayInfo;
 
     public St7789Driver(Spi spi, DigitalOutput dc, int displayHeight, PixelFormat pixelFormat) {
         this.spi = spi;
         this.dc = dc;
-        this.displayInfo = new DisplayInfo(WIDTH, displayHeight, pixelFormat);
+        this.displayInfo = new GraphicsDisplayInfo(WIDTH, displayHeight, pixelFormat);
         this.yOffset = 320 - displayHeight;
 
         init();
@@ -96,7 +100,7 @@ public class St7789Driver implements GraphicsDisplayDriver {
 
     }
 
-    private void command(int x)  {
+    private void command(int x) {
         if (x < 0 || x > 0xff) {
             throw new IllegalArgumentException("ST7789 bad command value " + x);
         }
@@ -131,7 +135,7 @@ public class St7789Driver implements GraphicsDisplayDriver {
     }
 
     private void data(byte[] x, int length) {
-        if (log.isTraceEnabled()) {  // Avoid large string allocation if logging is off.
+        if (log.isTraceEnabled()) { // Avoid large string allocation if logging is off.
             String raw = java.util.HexFormat.of().formatHex(x);
             if (raw.length() > 100) {
                 log.trace("Data: {} {}", length, raw.substring(0, 80));
@@ -145,7 +149,7 @@ public class St7789Driver implements GraphicsDisplayDriver {
     }
 
     @Override
-    public DisplayInfo getDisplayInfo() {
+    public GraphicsDisplayInfo getDisplayInfo() {
         return displayInfo;
     }
 

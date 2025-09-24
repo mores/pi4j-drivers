@@ -21,34 +21,32 @@ public class Scd4xDriverTest {
 
     @Test
     public void testBasicMeasurementWorks() {
-        Scd4xDriver driver = createInitializedDriver();
+        try (Scd4xDriver driver = createDriver()) {
+            assertEquals(Mode.IDLE, driver.getMode());
 
-        assertEquals(Mode.IDLE, driver.getMode());
+            driver.startPeriodicMeasurement();
 
-        driver.startPeriodicMeasurement();
+            assertEquals(Mode.PERIODIC_MEASUREMENT, driver.getMode());
 
-        assertEquals(Mode.PERIODIC_MEASUREMENT, driver.getMode());
+            Measurement measurement = driver.readMeasurement();
 
-        Measurement measurement = driver.readMeasurement();
+            driver.stopPeriodicMeasurement();
 
-        driver.stopPeriodicMeasurement();
+            assertEquals(Mode.IDLE, driver.getMode());
 
-        assertEquals(Mode.IDLE, driver.getMode());
-
-        assertTrue(measurement.getTemperature() > 0);
-        assertTrue(measurement.getTemperature() < 50);
-        assertTrue(measurement.getCo2() > 300);
-        assertTrue(measurement.getCo2() < 3000);
-        assertTrue(measurement.getHumidity() >= 0);
-        assertTrue(measurement.getHumidity() <= 100);
+            assertTrue(measurement.getTemperature() > 0);
+            assertTrue(measurement.getTemperature() < 50);
+            assertTrue(measurement.getCo2() > 300);
+            assertTrue(measurement.getCo2() < 3000);
+            assertTrue(measurement.getHumidity() >= 0);
+            assertTrue(measurement.getHumidity() <= 100);
+        }
     }
 
 
-    Scd4xDriver createInitializedDriver() {
-        try {
-            I2C i2c = pi4j.create(I2CConfigBuilder.newInstance(pi4j).bus(BUS).device(Scd4xDriver.I2C_ADDRESS));
-            Scd4xDriver driver = new Scd4xDriver(i2c);
-            driver.safeInit();
+    Scd4xDriver createDriver() {
+        try (I2C i2c = pi4j.create(I2CConfigBuilder.newInstance(pi4j).bus(BUS).device(Scd4xDriver.I2C_ADDRESS));
+             Scd4xDriver driver = new Scd4xDriver(i2c)) {
             return driver;
         } catch (Pi4JException e) {
             Assumptions.abort("SCD 4x not found on i2c bus " + BUS + " address " + Scd4xDriver.I2C_ADDRESS);

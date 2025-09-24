@@ -2,6 +2,7 @@ package com.pi4j.drivers.sensor.scd4x;
 
 import com.pi4j.io.i2c.I2C;
 
+import java.io.Closeable;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -11,7 +12,7 @@ import java.time.temporal.ChronoUnit;
  * <p>
  * Product datasheet link: https://sensirion.com/media/documents/48C4B7FB/64C134E7/Sensirion_SCD4x_Datasheet.pdf
  */
-public class Scd4xDriver {
+public class Scd4xDriver implements Closeable {
 
     /**
      * The I2C address of the device (needed for constructing an I2C instance)
@@ -22,7 +23,7 @@ public class Scd4xDriver {
     private final ByteBuffer ioBuf = ByteBuffer.allocate(9);
 
     private Instant busyUntil = Instant.now();
-    private Mode mode = Mode.UNKNOWN;
+    private Mode mode = Mode.IDLE;
 
     /**
      * Creates a driver instance, connected via the given I2C instance. Note that the i2c device value needs to be set
@@ -35,6 +36,7 @@ public class Scd4xDriver {
      */
     public Scd4xDriver(I2C i2c) {
         this.i2c = i2c;
+        safeInit();
     }
 
     // Basic commands; Chapter 3.5
@@ -81,9 +83,9 @@ public class Scd4xDriver {
         sendCommand(CommandCodes.READ_MEASUREMENT, 1);
         i2c.read(ioBuf.array(), 3 * 3);
         // i2c.read(buf, 0, 3*3);
-        int co2 = u16(ioBuf.getShort(0));
-        int raw_temperature = u16(ioBuf.getShort(3));
-        int raw_humidity = u16(ioBuf.getShort(6));
+        int co2 = getWord(0);
+        int raw_temperature = getWord(3);
+        int raw_humidity = getWord(6);
 
         if (mode == Mode.SINGLE_SHOT_MEASUREMENT) {
             mode = Mode.IDLE;
@@ -240,9 +242,9 @@ public class Scd4xDriver {
         sendConfigurationCommand(CommandCodes.GET_SERIAL_NUMBER, 1);
         materializeDelay();
         i2c.read(ioBuf.array(), 0, 3 * 3);
-        return (((long) u16(ioBuf.getShort(0))) << 32)
-                | ((long) u16(ioBuf.getShort(3)) << 16)
-                | u16(ioBuf.getShort(6));
+        return (((long) getWord(0)) << 32)
+                | ((long) getWord(3) << 16)
+                | getWord(6);
     }
 
     /**
@@ -376,8 +378,15 @@ public class Scd4xDriver {
 
     // Internal helpers
 
-    private static int u16(short s16) {
-        return s16 & 0xffff;
+    private int getWord(int byteIndex) {
+        int word = ioBuf.getShort(byteIndex) & 0xffff;
+        byte calculatedCrc = crc(ioBuf, byteIndex, 2);
+        byte receivedCrc = ioBuf.get(byteIndex + 2);
+        if (calculatedCrc != receivedCrc) {
+            throw new IllegalStateException("Calculated crc: " + Integer.toHexString(calculatedCrc & 0xff) + " for: " + Integer.toHexString(word)
+                    + " does not match the reived crc: " + Integer.toHexString(receivedCrc & 0xff));
+        }
+        return word;
     }
 
     private static byte crc(ByteBuffer data, int offset, int count) {
@@ -399,11 +408,10 @@ public class Scd4xDriver {
      * Checks that the mode is IDLE and then calls sendCommand.
      */
     private void sendConfigurationCommand(int cmdCode, int timeMs, int... args) {
-        if (mode != Mode.IDLE && mode != Mode.UNKNOWN) {
+        if (mode != Mode.IDLE) {
             throw new IllegalStateException("Command 0x" + Integer.toHexString(cmdCode) + " can only be issued in IDLE mode.");
         }
         sendCommand(cmdCode, timeMs, args);
-        mode = Mode.IDLE;
     }
 
     /**
@@ -444,7 +452,7 @@ public class Scd4xDriver {
         materializeDelay();
         // .array() as Pi4j does sketchy stuff when handing in byte buffers directly
         i2c.read(ioBuf.array(), 3);
-        return u16(ioBuf.getShort(0));
+        return getWord(0);
     }
 
     private void materializeDelay() {
@@ -462,11 +470,15 @@ public class Scd4xDriver {
         }
     }
 
+    @Override
+    public void close() {
+        i2c.close();
+    }
+
     public enum Mode {
         /**
          * After construction, we don't know the mode -- it might be different from IDLE from previous usage
          */
-        UNKNOWN,
         IDLE,
         PERIODIC_MEASUREMENT,
         LOW_POWER_PERIODIC_MEASUREMENT,

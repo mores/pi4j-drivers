@@ -1,6 +1,5 @@
-package com.pi4j.drivers.display;
+package com.pi4j.drivers.display.graphics;
 
-import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
@@ -20,19 +19,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.pi4j.drivers.display.DisplayInfo;
-import com.pi4j.drivers.display.PixelFormat;
+public class AwtGraphicsDisplayTest {
 
-public class AwtGraphicsDisplayComponentTest {
-
-    private static Logger log = LoggerFactory.getLogger(AwtGraphicsDisplayComponentTest.class);
+    private static Logger log = LoggerFactory.getLogger(AwtGraphicsDisplayTest.class);
 
     // 12 bit test
     @Test
     public void testRgb888toRgb444() throws IOException {
 
-        FakeDisplayDriver display = new FakeDisplayDriver(new DisplayInfo(10, 10, PixelFormat.RGB_444));
-        AwtGraphicsDisplayComponent mockDisplay = new AwtGraphicsDisplayComponent(display);
+        FakeGraphicsDisplayDriver display = new FakeGraphicsDisplayDriver(10, 10, PixelFormat.RGB_444);
+        AwtGraphicsDisplay mockDisplay = new AwtGraphicsDisplay(display);
+        mockDisplay.setTransferDelayMillis(0);
 
         BufferedImage img = new BufferedImage(12, 12, BufferedImage.TYPE_4BYTE_ABGR);
         Graphics2D g2d = img.createGraphics();
@@ -53,8 +50,9 @@ public class AwtGraphicsDisplayComponentTest {
     @Test
     public void testRgb888toRgb565() throws IOException {
 
-        FakeDisplayDriver display = new FakeDisplayDriver(new DisplayInfo(10, 10, PixelFormat.RGB_565));
-        AwtGraphicsDisplayComponent mockDisplay = new AwtGraphicsDisplayComponent(display);
+        FakeGraphicsDisplayDriver display = new FakeGraphicsDisplayDriver(10, 10, PixelFormat.RGB_565);
+        AwtGraphicsDisplay mockDisplay = new AwtGraphicsDisplay(display);
+        mockDisplay.setTransferDelayMillis(0);
 
         BufferedImage img = new BufferedImage(12, 12, BufferedImage.TYPE_4BYTE_ABGR);
         Graphics2D g2d = img.createGraphics();
@@ -74,8 +72,9 @@ public class AwtGraphicsDisplayComponentTest {
     @Test
     public void testDisplayDataBufferInt444() {
 
-        FakeDisplayDriver display = new FakeDisplayDriver(new DisplayInfo(10, 10, PixelFormat.RGB_444));
-        AwtGraphicsDisplayComponent mockDisplay = new AwtGraphicsDisplayComponent(display);
+        FakeGraphicsDisplayDriver display = new FakeGraphicsDisplayDriver(10, 10, PixelFormat.RGB_444);
+        AwtGraphicsDisplay mockDisplay = new AwtGraphicsDisplay(display);
+        mockDisplay.setTransferDelayMillis(0);
 
         BufferedImage img = makeDataBufferInt();
         mockDisplay.display(img);
@@ -90,8 +89,9 @@ public class AwtGraphicsDisplayComponentTest {
     @Test
     public void testDisplayDataBufferInt565() {
 
-        FakeDisplayDriver display = new FakeDisplayDriver(new DisplayInfo(10, 10, PixelFormat.RGB_565));
-        AwtGraphicsDisplayComponent mockDisplay = new AwtGraphicsDisplayComponent(display);
+        FakeGraphicsDisplayDriver display = new FakeGraphicsDisplayDriver(10, 10, PixelFormat.RGB_565);
+        AwtGraphicsDisplay mockDisplay = new AwtGraphicsDisplay(display);
+        mockDisplay.setTransferDelayMillis(0);
 
         BufferedImage img = makeDataBufferInt();
         mockDisplay.display(img);
