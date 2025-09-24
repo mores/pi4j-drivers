@@ -6,7 +6,7 @@ import com.pi4j.drivers.display.graphics.PixelFormat;
 
 import java.io.*;
 
-public class FramebufferDriver implements GraphicsDisplayDriver {
+public class FramebufferDriver implements GraphicsDisplayDriver, Closeable {
 
     private static final String SENSE_HAT_FB_NAME = "RPi-Sense FB";
     private final GraphicsDisplayInfo displayInfo;
@@ -32,7 +32,6 @@ public class FramebufferDriver implements GraphicsDisplayDriver {
         return null;
     }
 
-
     public static GraphicsDisplayDriver forSenseHat() {
         return new FramebufferDriver(resolveFramebufferName(SENSE_HAT_FB_NAME), 8, 8, PixelFormat.RGB_565);
     }
@@ -44,6 +43,15 @@ public class FramebufferDriver implements GraphicsDisplayDriver {
             throw new IllegalStateException(e);
         }
         this.displayInfo = new GraphicsDisplayInfo(width, height, pixelFormat);
+    }
+
+    @Override
+    public void close() {
+        try {
+            file.close();
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     @Override
