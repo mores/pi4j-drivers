@@ -1,5 +1,7 @@
 package com.pi4j.drivers.display.graphics;
 
+import com.pi4j.drivers.display.BitmapFont;
+
 import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -163,5 +165,71 @@ public class GraphicsDisplay {
                 }
             }
         }
+    }
+
+    /**
+     * Renders a text string at the given position with the given font and color.
+     * <p>
+     * Returns the width of the rendered text in pixel.
+     */
+    public int renderText(int x, int baselineY, String text, BitmapFont font, int color) {
+        return renderText(x, baselineY, text, font, color, 1, 1);
+    }
+
+    /**
+     * Renders a text string at the given position with the given font, color and scale.
+     * <p>
+     * Returns the width of the rendered text in pixel.
+     */
+    public int renderText(
+            int x, int baselineY, String text, BitmapFont font, int color, int scaleX, int scaleY
+    ) {
+        int length = text.length();
+        int width = 0;
+        for (int offset = 0; offset < length; ) {
+            int codepoint = text.codePointAt(offset);
+            offset += Character.charCount(codepoint);
+            width += renderCharacter(x + width, baselineY, codepoint, font, color, scaleX, scaleY);
+        }
+        return width;
+    }
+
+    /**
+     * Renders a single character at the given position.
+     * <p>
+     * Returns the width of the character in pixel.
+     */
+    public int renderCharacter(
+            int x0, int baselineY, int codepoint, BitmapFont font, int color, int scaleX, int scaleY
+    ) {
+        BitmapFont.Glyph glyph = font.getGlyph(codepoint);
+        if (glyph == null) {
+            return font.getCellWidth();
+        }
+        int w = glyph.getWidth();
+        int h = font.getCellHeight();
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                if (glyph.getPixel(x, y)) {
+                    int x2 = x;
+                    // Combine neighbouring pixels to reduce the number of calls.
+                    while (x2 < glyph.getWidth() && glyph.getPixel(x2 + 1, y)) {
+                        x2++;
+                    }
+                    if (scaleX == 1 && scaleY == 1 && x2 == x) {
+                        setPixel(x0 + x, baselineY + y - h, color);
+                    } else {
+                        fillRect(
+                                x0 + scaleX * x,
+                                baselineY + (y - h) * scaleY,
+                                scaleX * (x2 - x + 1),
+                                scaleY,
+                                color);
+                    }
+                    x = x2;
+                }
+            }
+        }
+        return w * scaleX;
     }
 }
