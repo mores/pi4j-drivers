@@ -149,7 +149,7 @@ public class GraphicsDisplay {
 
     /** Returns the address of the given pixel in the display buffer */
     private int pixelAddress(int x, int y) {
-        return y * driver.getDisplayInfo().getWidth() + x;
+        return y * displayWidth + x;
     }
 
     /** Transfers the given display buffer area to the display driver, mapping the rotation */
