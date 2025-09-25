@@ -159,6 +159,6 @@ public class St7789Driver implements GraphicsDisplayDriver {
         command(CASET, x, x + width - 1); // Column addr set
         command(RASET, yOffset + y, yOffset + y + height - 1); // Row addr set
         command(RAMWR); // write to RAM
-        data(data, width * height * displayInfo.getPixelFormat().getBitCount() / 8);
+        data(data, (width * height * displayInfo.getPixelFormat().getBitCount() + 7) / 8);
     }
 }
