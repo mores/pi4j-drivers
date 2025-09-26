@@ -6,11 +6,7 @@ public class FakeGraphicsDisplayDriver implements GraphicsDisplayDriver {
     private final GraphicsDisplayInfo displayInfo;
 
     public FakeGraphicsDisplayDriver(int width, int height, PixelFormat pixelFormat) {
-        int xGranularity = 1;
-        while ((xGranularity * pixelFormat.getBitCount()) % 8 != 0) {
-            xGranularity *= 2;
-        }
-        this.displayInfo = new GraphicsDisplayInfo(width, height, pixelFormat, xGranularity);
+        this.displayInfo = new GraphicsDisplayInfo(width, height, pixelFormat);
         this.data = new byte[(displayInfo.getWidth() * displayInfo.getHeight()
                 * displayInfo.getPixelFormat().getBitCount() + 7) / 8];
         checkAlignment(width, "Display width");

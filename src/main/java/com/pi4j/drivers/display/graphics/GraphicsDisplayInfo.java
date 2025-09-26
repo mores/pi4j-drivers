@@ -9,6 +9,14 @@ public class GraphicsDisplayInfo {
     /** x-coordinates must be a multiple of this value when sending data to the driver. */
     private final int xGranularity;
 
+    private static int granularityForBits(int bitCount) {
+        int xGranularity = 1;
+        while ((xGranularity * bitCount) % 8 != 0) {
+            xGranularity *= 2;
+        }
+        return xGranularity;
+    }
+
     public GraphicsDisplayInfo(int width, int height, PixelFormat pixelFormat, int xGranularity) {
         this.width = width;
         this.height = height;
@@ -17,7 +25,7 @@ public class GraphicsDisplayInfo {
     }
 
     public GraphicsDisplayInfo(int width, int height, PixelFormat pixelFormat) {
-        this(width, height, pixelFormat, 1);
+        this(width, height, pixelFormat, granularityForBits(pixelFormat.getBitCount()));
     }
 
         /** The width of the display in pixel. */
