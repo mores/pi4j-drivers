@@ -1,11 +1,13 @@
 package com.pi4j.drivers.input.rotary.adafruit5880;
 
 import java.nio.ByteBuffer;
+import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.pi4j.io.i2c.I2C;
+import com.pi4j.io.gpio.digital.DigitalInput;
 
 /*
  *
@@ -16,11 +18,22 @@ public class Adafruit5880Driver {
     private static Logger log = LoggerFactory.getLogger(Adafruit5880Driver.class);
 
     private I2C i2c;
+    private DigitalInput interruptPin;
 
     public Adafruit5880Driver(I2C i2c) {
-
         this.i2c = i2c;
 
+        init();
+    }
+
+    public Adafruit5880Driver(I2C i2c, DigitalInput interruptPin) {
+        this.i2c = i2c;
+        this.interruptPin = interruptPin;
+
+        init();
+    }
+
+    private void init() {
         i2c.writeRegister((byte) Adafruit5880Constants.STATUS_BASE, (byte) Adafruit5880Constants.STATUS_HW_ID);
         try {
             Thread.sleep(8);
@@ -45,6 +58,18 @@ public class Adafruit5880Driver {
         i2c.write(bufLength);
 
         setPosition(0);
+
+        byte[] interrupt = new byte[3];
+        interrupt[0] = (byte) Adafruit5880Constants.ENCODER_BASE;
+        interrupt[2] = 0x01;
+
+        if (interruptPin != null) {
+            interrupt[1] = (byte) Adafruit5880Constants.ENCODER_INTERUPTSET;
+        } else {
+            interrupt[1] = (byte) Adafruit5880Constants.ENCODER_INTERUPTCLR;
+        }
+
+        i2c.write(interrupt);
     }
 
     public void setPixel(int color) throws Exception {
@@ -92,5 +117,11 @@ public class Adafruit5880Driver {
         data[2] = (byte) ((pos >> 24) & 0xff);
         i2c.write(data);
         return true;
+    }
+
+    public void addButtonListener(Consumer<Boolean> listener) {
+    }
+
+    public void addPositionListener(Consumer<Integer> listener) {
     }
 }

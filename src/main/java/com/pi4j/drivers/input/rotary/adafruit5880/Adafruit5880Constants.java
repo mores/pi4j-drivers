@@ -7,8 +7,8 @@ package com.pi4j.drivers.input.rotary.adafruit5880;
 class Adafruit5880Constants {
 
     public static final short ENCODER_BASE = 0x11;
-    public static final short ENCODER_INTENSET = 0x10;
-    public static final short ENCODER_INTENCLR = 0x20;
+    public static final short ENCODER_INTERUPTSET = 0x10;
+    public static final short ENCODER_INTERUPTCLR = 0x20;
     public static final short ENCODER_POSITION = 0x30;
     public static final short ENCODER_DELTA = 0x40;
 
