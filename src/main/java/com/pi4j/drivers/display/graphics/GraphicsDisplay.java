@@ -10,6 +10,10 @@ public class GraphicsDisplay {
     // TODO(https://github.com/Pi4J/pi4j/issues/475): Remove or update this limitation.
     private static final int MAX_TRANSFER_SIZE = 4000;
 
+    enum Rotation {
+        ROTATE_0, ROTATE_90, ROTATE_180, ROTATE_270
+    }
+
     protected final GraphicsDisplayDriver driver;
     private final Object lock = new Object();
     private final int[] displayBuffer;
@@ -24,11 +28,22 @@ public class GraphicsDisplay {
     private int transferDelayMillis = 15;
     private final int displayWidth;
     private final int displayHeight;
+    private final Rotation rotation;
 
     public GraphicsDisplay(GraphicsDisplayDriver driver) {
+        this(driver, Rotation.ROTATE_0);
+    }
+
+    public GraphicsDisplay(GraphicsDisplayDriver driver, Rotation rotation) {
         this.driver = driver;
-        displayWidth = driver.getDisplayInfo().getWidth();
-        displayHeight = driver.getDisplayInfo().getHeight();
+        this.rotation = rotation;
+        if (rotation == Rotation.ROTATE_0 || rotation == Rotation.ROTATE_180) {
+            displayWidth = driver.getDisplayInfo().getWidth();
+            displayHeight = driver.getDisplayInfo().getHeight();
+        } else {
+            displayWidth = driver.getDisplayInfo().getHeight();
+            displayHeight = driver.getDisplayInfo().getWidth();
+        }
         displayBuffer = new int[displayWidth * displayHeight];
         transferBuffer = new byte[Math.min(
                 MAX_TRANSFER_SIZE,
@@ -83,86 +98,6 @@ public class GraphicsDisplay {
                 modifiedYMin = Integer.MAX_VALUE;
                 modifiedXMax = Integer.MIN_VALUE;
                 modifiedYMax = Integer.MIN_VALUE;
-            }
-        }
-    }
-
-    /** Sets the pixel at the given coordinates to the given color */
-    public void setPixel(int x, int y, int color) {
-        synchronized (lock) {
-            if (x < 0 || y < 0 || x >= displayWidth || y >= displayHeight) {
-                return;
-            }
-            displayBuffer[pixelAddress(x, y)] = color;
-            markModified(x, y, x + 1, y + 1);
-        }
-    }
-
-    /**
-     * Sets the maximum delay between graphics updates and the screen buffer transfer to the display driver.
-     * Setting the value to 0 will send all data immediately. A negative value will require an explicit
-     * call to flush for the transfer. The default value is 15;
-     */
-    public void setTransferDelayMillis(int millis) {
-        this.transferDelayMillis = millis;
-    }
-
-    // Private methods. Note that internally
-    // - we assume coordinates are in range while we account for out-of-bounds coordinates in user methods.
-    // - we use min/max coordinate bounds instead of width/height as in user methods.
-
-    /** Marks the given screen area as modified */
-    private void markModified(int xMin, int yMin, int xMax, int yMax) {
-        synchronized (lock) {
-            modifiedXMin = Math.min(modifiedXMin, xMin);
-            modifiedYMin = Math.min(modifiedYMin, yMin);
-            modifiedXMax = Math.max(modifiedXMax, xMax);
-            modifiedYMax = Math.max(modifiedYMax, yMax);
-            if (transferDelayMillis == 0) {
-                flush();
-            } else if (pendingUpdate == null && transferDelayMillis > 0) {
-                pendingUpdate = new TimerTask() {
-                    @Override
-                    public void run() {
-                        pendingUpdate = null;
-                        flush();
-                    }};
-                timer.schedule(pendingUpdate, transferDelayMillis);
-            }
-        }
-    }
-
-    /** Returns the address of the given pixel in the display buffer */
-    private int pixelAddress(int x, int y) {
-        return y * driver.getDisplayInfo().getWidth() + x;
-    }
-
-    /** Transfers the given display buffer area to the display driver */
-    private void transferBuffer(int xMin, int yMin, int xMax, int yMax) {
-        synchronized (lock) {
-            int xGranularity = driver.getDisplayInfo().getXGranularity();
-            xMin = (xMin / xGranularity) * xGranularity;
-            xMax = ((xMax + xGranularity - 1) / xGranularity) * xGranularity;
-
-            int width = xMax - xMin;
-            int height = yMax - yMin;
-
-            PixelFormat pixelFormat = driver.getDisplayInfo().getPixelFormat();
-            int bitsPerRow = width * pixelFormat.getBitCount();
-            int bitOffset = 0;
-            for (int i = 0; i < height; i++) {
-                bitOffset += pixelFormat.writeRgb(
-                        displayBuffer,
-                        pixelAddress(xMin, yMin + i),
-                        transferBuffer,
-                        bitOffset,
-                        width);
-                // Transfer if the last row is reached or the next row would overflow the buffer.
-                if (i == height - 1 || bitOffset + bitsPerRow > transferBuffer.length * 8) {
-                    int rows = bitOffset / bitsPerRow;
-                    driver.setPixels(xMin, yMin + i + 1 - rows, width, rows, transferBuffer);
-                    bitOffset = 0;
-                }
             }
         }
     }
@@ -232,4 +167,102 @@ public class GraphicsDisplay {
         }
         return w * scaleX;
     }
+
+
+    /** Sets the pixel at the given coordinates to the given color */
+    public void setPixel(int x, int y, int color) {
+        synchronized (lock) {
+            if (x < 0 || y < 0 || x >= displayWidth || y >= displayHeight) {
+                return;
+            }
+            displayBuffer[pixelAddress(x, y)] = color;
+            markModified(x, y, x + 1, y + 1);
+        }
+    }
+
+    /**
+     * Sets the maximum delay between graphics updates and the screen buffer transfer to the display driver.
+     * Setting the value to 0 will send all data immediately. A negative value will require an explicit
+     * call to flush for the transfer. The default value is 15;
+     */
+    public void setTransferDelayMillis(int millis) {
+        this.transferDelayMillis = millis;
+    }
+
+    // Private methods. Note that internally
+    // - we assume coordinates are in range while we account for out-of-bounds coordinates in user methods.
+    // - we use min/max coordinate bounds instead of width/height as in user methods.
+
+    /** Marks the given screen area as modified */
+    private void markModified(int xMin, int yMin, int xMax, int yMax) {
+        synchronized (lock) {
+            modifiedXMin = Math.min(modifiedXMin, xMin);
+            modifiedYMin = Math.min(modifiedYMin, yMin);
+            modifiedXMax = Math.max(modifiedXMax, xMax);
+            modifiedYMax = Math.max(modifiedYMax, yMax);
+            if (transferDelayMillis == 0) {
+                flush();
+            } else if (pendingUpdate == null && transferDelayMillis > 0) {
+                pendingUpdate = new TimerTask() {
+                    @Override
+                    public void run() {
+                        pendingUpdate = null;
+                        flush();
+                    }};
+                timer.schedule(pendingUpdate, transferDelayMillis);
+            }
+        }
+    }
+
+    /** Returns the address of the given pixel in the display buffer */
+    private int pixelAddress(int x, int y) {
+        return y * displayWidth + x;
+    }
+
+    /** Transfers the given display buffer area to the display driver, mapping the rotation */
+    private void transferBuffer(int xMin, int yMin, int xMax, int yMax) {
+        switch (rotation) {
+            case ROTATE_0 ->
+                transferBuffer(pixelAddress(xMin, yMin), 1, displayWidth, xMin, yMin, xMax, yMax);
+            case ROTATE_90 ->
+                transferBuffer(pixelAddress(xMin, yMax - 1), -displayWidth, 1, displayHeight - yMax, displayWidth - xMax, displayHeight - yMin, displayWidth - xMin);
+            case ROTATE_180 ->
+                transferBuffer(pixelAddress(xMax - 1, yMax - 1), -1, -displayWidth, displayWidth - xMax, displayHeight - yMax, displayWidth - xMin, displayHeight - yMin);
+            case ROTATE_270 ->
+                transferBuffer(pixelAddress(xMax - 1, yMin), displayWidth, -1, yMin, xMin, yMax, xMax);
+        }
+    }
+
+    /** Transfers the given display buffer area to the display driver */
+    private void transferBuffer(int sourceAddress, int sourceStrideX, int sourceStrideY, int xMin, int yMin, int xMax, int yMax) {
+        synchronized (lock) {
+            int xGranularity = driver.getDisplayInfo().getXGranularity();
+            xMin = (xMin / xGranularity) * xGranularity;
+            xMax = ((xMax + xGranularity - 1) / xGranularity) * xGranularity;
+
+            int width = xMax - xMin;
+            int height = yMax - yMin;
+
+            PixelFormat pixelFormat = driver.getDisplayInfo().getPixelFormat();
+            int bitsPerRow = width * pixelFormat.getBitCount();
+            int bitOffset = 0;
+            for (int i = 0; i < height; i++) {
+                bitOffset += pixelFormat.writeRgb(
+                        displayBuffer,
+                        sourceAddress,
+                        sourceStrideX,
+                        transferBuffer,
+                        bitOffset,
+                        width);
+                sourceAddress += sourceStrideY;
+                // Transfer if the last row is reached or the next row would overflow the buffer.
+                if (i == height - 1 || bitOffset + bitsPerRow > transferBuffer.length * 8) {
+                    int rows = bitOffset / bitsPerRow;
+                    driver.setPixels(xMin, yMin + i + 1 - rows, width, rows, transferBuffer);
+                    bitOffset = 0;
+                }
+            }
+        }
+    }
+
 }

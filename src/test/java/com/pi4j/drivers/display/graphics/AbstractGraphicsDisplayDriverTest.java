@@ -50,24 +50,26 @@ public abstract class AbstractGraphicsDisplayDriverTest {
     @Test
     public void testBitmapFont() throws InterruptedException {
         GraphicsDisplayDriver driver = createDriver(pi4j);
-        GraphicsDisplay display = new GraphicsDisplay(driver);
-        GraphicsDisplayInfo displayInfo = driver.getDisplayInfo();
-        int width = displayInfo.getWidth();
-        int height = displayInfo.getHeight();
-        display.fillRect(0, 0, width, height, 0);
+        for (GraphicsDisplay.Rotation rotation : GraphicsDisplay.Rotation.values()) {
+            GraphicsDisplay display = new GraphicsDisplay(driver, rotation);
+            GraphicsDisplayInfo displayInfo = driver.getDisplayInfo();
+            int width = displayInfo.getWidth();
+            int height = displayInfo.getHeight();
+            display.fillRect(0, 0, width, height, 0);
 
-        BitmapFont font = BitmapFont.get5x8Font();
-        BitmapFont proportionalFont = BitmapFont.get5x10Font(BitmapFont.Option.PROPORTIONAL);
+            BitmapFont font = BitmapFont.get5x8Font();
+            BitmapFont proportionalFont = BitmapFont.get5x10Font(BitmapFont.Option.PROPORTIONAL);
 
-        int textWidth = display.renderText(10, 20, "Hello Pi4J Monospaced", font, 0xff8888);
-        assertEquals("Hello Pi4J Monospaced".length() * 6, textWidth);
+            int textWidth = display.renderText(1, 8, "Hello Pi4J Monospaced", font, 0xff8888);
+            assertEquals("Hello Pi4J Monospaced".length() * 6, textWidth);
+            display.renderText(1, 50, "Hello Pi4j-gpqy", proportionalFont, 0x88ff88, 2, 3);
+            display.renderText(1, 100, "Hello Pi4J 3/4x", proportionalFont, 0x8888ff, 3, 4);
+            display.renderText(1, 180, "Hello Pi4J", proportionalFont, 0xffff88, 4, 7);
 
-        display.renderText(10, 50, "Hello Pi4j-gpqy", proportionalFont, 0x88ff88, 2, 2);
-        display.renderText(10, 90, "Hello Pi4J 3x", proportionalFont, 0x8888ff, 3, 3);
-        display.renderText(10, 140, "Hello Pi4J", proportionalFont, 0xffff88, 4, 4);
-        display.renderText(10, 200, "Hello Pi4J", proportionalFont, 0xff88ff, 4, 6);
+            display.flush(); // Make sure we don't get writes later.
 
-        display.flush(); // Make sure we don't get writes later.
+            Thread.sleep(100);
+        }
     }
 
     @Test
@@ -81,7 +83,7 @@ public abstract class AbstractGraphicsDisplayDriverTest {
 
         for( int x = 0; x < width; x++ ) {
             for( int y = 0; y < height; y++ ) {
-                display.setPixel( x, y, java.awt.Color.BLACK.getRGB() );
+                display.setPixel( x, y, java.awt.Color.HSBtoRGB((1f * (x + height - y)) / (width + height), 1, 1));
             }
             Thread.sleep(5);
         }
