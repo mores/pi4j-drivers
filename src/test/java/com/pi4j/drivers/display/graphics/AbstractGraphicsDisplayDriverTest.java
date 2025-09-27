@@ -97,7 +97,7 @@ public abstract class AbstractGraphicsDisplayDriverTest {
             }
             Thread.sleep(5);
         }
-        
+
         display.close();
     }
 }

@@ -1,12 +1,9 @@
 package com.pi4j.drivers.display.graphics.ws281x;
 
-import com.pi4j.context.Context;
 import com.pi4j.drivers.display.graphics.GraphicsDisplayDriver;
 import com.pi4j.drivers.display.graphics.GraphicsDisplayInfo;
 import com.pi4j.drivers.display.graphics.PixelFormat;
 import com.pi4j.io.spi.Spi;
-
-import java.io.IOException;
 
 /**
  * Implements a driver for WS 281x LED strips using a SPI interface. Note that the baud rate of the

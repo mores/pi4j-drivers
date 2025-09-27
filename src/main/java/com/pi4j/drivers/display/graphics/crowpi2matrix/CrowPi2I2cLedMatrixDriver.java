@@ -6,7 +6,6 @@ import com.pi4j.drivers.display.graphics.GraphicsDisplayInfo;
 import com.pi4j.drivers.display.graphics.PixelFormat;
 import com.pi4j.io.i2c.I2C;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
