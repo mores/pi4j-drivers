@@ -13,14 +13,17 @@ import java.util.Random;
 
 public abstract class AbstractGraphicsDisplayDriverTest {
     private Context pi4j;
+    private GraphicsDisplayDriver driver;
 
     @BeforeEach
     public void setUp() {
         pi4j = Pi4J.newAutoContext();
+        driver = createDriver(pi4j);
     }
 
     @AfterEach
     public void tearDown() {
+        driver.close();
         pi4j.shutdown();
     }
 
@@ -28,7 +31,6 @@ public abstract class AbstractGraphicsDisplayDriverTest {
 
     @Test
     public void testFillRect() throws InterruptedException {
-        GraphicsDisplayDriver driver = createDriver(pi4j);
         GraphicsDisplay display = new GraphicsDisplay(driver);
         GraphicsDisplayInfo displayInfo = driver.getDisplayInfo();
         int width = displayInfo.getWidth();
@@ -49,7 +51,6 @@ public abstract class AbstractGraphicsDisplayDriverTest {
 
     @Test
     public void testBitmapFont() throws InterruptedException {
-        GraphicsDisplayDriver driver = createDriver(pi4j);
         for (GraphicsDisplay.Rotation rotation : GraphicsDisplay.Rotation.values()) {
             GraphicsDisplay display = new GraphicsDisplay(driver, rotation);
             GraphicsDisplayInfo displayInfo = driver.getDisplayInfo();
@@ -74,7 +75,6 @@ public abstract class AbstractGraphicsDisplayDriverTest {
 
     @Test
     public void testSetPixel() throws InterruptedException {
-        GraphicsDisplayDriver driver = createDriver(pi4j);
         GraphicsDisplay display = new GraphicsDisplay(driver);
         GraphicsDisplayInfo displayInfo = driver.getDisplayInfo();
         int width = displayInfo.getWidth();

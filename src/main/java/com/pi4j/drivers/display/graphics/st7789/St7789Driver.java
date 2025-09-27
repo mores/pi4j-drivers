@@ -10,6 +10,7 @@ import com.pi4j.io.spi.Spi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.EnumSet;
 
 /*
@@ -160,5 +161,11 @@ public class St7789Driver implements GraphicsDisplayDriver {
         command(RASET, yOffset + y, yOffset + y + height - 1); // Row addr set
         command(RAMWR); // write to RAM
         data(data, (width * height * displayInfo.getPixelFormat().getBitCount() + 7) / 8);
+    }
+
+    @Override
+    public void close() {
+        spi.close();
+        dc.shutdown(dc.provider().context());
     }
 }

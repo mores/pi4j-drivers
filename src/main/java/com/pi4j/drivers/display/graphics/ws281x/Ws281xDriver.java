@@ -5,6 +5,8 @@ import com.pi4j.drivers.display.graphics.GraphicsDisplayInfo;
 import com.pi4j.drivers.display.graphics.PixelFormat;
 import com.pi4j.io.spi.Spi;
 
+import java.io.IOException;
+
 /**
  * Implements a driver for WS 281x LED strips using a SPI interface. Note that the baud rate of the
  * SPI channel needs to be set to SPI_BAUD.
@@ -73,5 +75,10 @@ public class Ws281xDriver implements GraphicsDisplayDriver {
         if (lastChangedPixel > 0) {
             spi.write(spiBuffer, 0, lastChangedPixel * COLOR_CHANNELS * BIT_STRETCH);
         }
+    }
+
+    @Override
+    public void close() {
+        spi.close();
     }
 }
