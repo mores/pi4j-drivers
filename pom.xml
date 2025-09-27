@@ -119,12 +119,12 @@
             <id>sonatype-oss-staging</id>
             <name>Sonatype Open Source Maven Repository</name>
             <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
-           <!-- <releases>
+            <releases>
                 <enabled>true</enabled>
             </releases>
             <snapshots>
                 <enabled>true</enabled>
-            </snapshots> -->
+            </snapshots>
         </repository>
         <repository>
             <id>sonatype-oss-snapshots</id>
