@@ -11,8 +11,6 @@ public class CrowPi2I2cLedMatrixDriverTest extends AbstractGraphicsDisplayDriver
     @Override
     public GraphicsDisplayDriver createDriver(Context pi4j) {
         try {
-            // Spi spi = pi4j.create(Spi.newConfigBuilder(pi4j).bus(0).address(0).build());
-            // return new Ws281xDriver(spi, 8, 8);
             return new CrowPi2I2cLedMatrixDriver(pi4j);
         } catch (RuntimeException e) {
             // TODO(https://github.com/Pi4J/pi4j/issues/489): Catch Pi4j exceptions instead.
