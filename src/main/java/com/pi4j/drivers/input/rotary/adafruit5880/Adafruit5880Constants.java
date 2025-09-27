@@ -6,23 +6,29 @@ package com.pi4j.drivers.input.rotary.adafruit5880;
  */
 class Adafruit5880Constants {
 
-    public static final short ENCODER_BASE = 0x11;
-    public static final short ENCODER_INTERUPTSET = 0x10;
-    public static final short ENCODER_INTERUPTCLR = 0x20;
-    public static final short ENCODER_POSITION = 0x30;
-    public static final short ENCODER_DELTA = 0x40;
+    // the knob functionality
+    public static final byte ENCODER_BASE = 0x11;
+    public static final byte ENCODER_INTERUPTSET = 0x10;
+    public static final byte ENCODER_INTERUPTCLR = 0x20;
+    public static final byte ENCODER_POSITION = 0x30;
+    public static final byte ENCODER_DELTA = 0x40;
 
-    public static final short GPIO_BASE = 0x01;
-    public static final short GPIO_BULK = 0x04;
+    // the button functionality
+    public static final byte GPIO_BASE = 0x01;
+    public static final byte GPIO_BULK = 0x04;
+    public static final byte GPIO_INTERUPTSET = 0x08;
+    public static final byte GPIO_INTERUPTCLR = 0x09;
 
-    public static final short NEOPIXEL_BASE = 0x0E;
-    public static final short NEOPIXEL_BUF = 0x04;
-    public static final short NEOPIXEL_BUF_LENGTH = 0x03;
-    public static final short NEOPIXEL_PIN = 0x01;
-    public static final short NEOPIXEL_SHOW = 0x05;
+    public static final byte NEOPIXEL_BASE = 0x0E;
+    public static final byte NEOPIXEL_BUF = 0x04;
+    public static final byte NEOPIXEL_BUF_LENGTH = 0x03;
+    public static final byte NEOPIXEL_PIN = 0x01;
+    public static final byte NEOPIXEL_SHOW = 0x05;
 
-    public static final short STATUS_BASE = 0x00;
-    public static final short STATUS_HW_ID = 0x01;
-    public static final short STATUS_VERSION = 0x02;
+    // seesaw
+    public static final byte STATUS_BASE = 0x00;
+    public static final byte STATUS_HW_ID = 0x01;
+    public static final byte STATUS_VERSION = 0x02;
+    public static final byte STATUS_SWRST = 0x7F;
 
 }

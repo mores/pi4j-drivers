@@ -10,7 +10,8 @@ import com.pi4j.io.i2c.I2C;
 import com.pi4j.io.gpio.digital.DigitalInput;
 
 /*
- *
+ * The Adafruit5880 uses an ATSAMD09 microcontroller
+ * https://github.com/adafruit/Adafruit_Seesaw/blob/985b41efae3d9a8cba12a7b4d9ff0d226f9e0759/Adafruit_seesaw.cpp
  */
 
 public class Adafruit5880Driver {
@@ -19,6 +20,7 @@ public class Adafruit5880Driver {
 
     private I2C i2c;
     private DigitalInput interruptPin;
+    private Adafruit5880Listener listener;
 
     public Adafruit5880Driver(I2C i2c) {
         this.i2c = i2c;
@@ -33,7 +35,19 @@ public class Adafruit5880Driver {
         init();
     }
 
+    private void write8(byte first, byte second, byte third) {
+        byte[] data = new byte[3];
+        data[0] = first;
+        data[1] = second;
+        data[2] = third;
+        i2c.write(data);
+    }
+
     private void init() {
+
+        // perform a software reset. This resets all seesaw registers to *their default values
+        write8(Adafruit5880Constants.STATUS_BASE, Adafruit5880Constants.STATUS_SWRST, (byte) 0xFF);
+
         i2c.writeRegister((byte) Adafruit5880Constants.STATUS_BASE, (byte) Adafruit5880Constants.STATUS_HW_ID);
         try {
             Thread.sleep(8);
@@ -44,11 +58,7 @@ public class Adafruit5880Driver {
         byte chipId = (byte) i2c.readRegister((byte) Adafruit5880Constants.STATUS_BASE);
         log.info("chipId: " + chipId);
 
-        byte[] pin = new byte[3];
-        pin[0] = (byte) Adafruit5880Constants.NEOPIXEL_BASE;
-        pin[1] = (byte) Adafruit5880Constants.NEOPIXEL_PIN;
-        pin[2] = (byte) 0x06;
-        i2c.write(pin);
+        write8(Adafruit5880Constants.NEOPIXEL_BASE, Adafruit5880Constants.NEOPIXEL_PIN, (byte) 0x06);
 
         byte[] bufLength = new byte[4];
         bufLength[0] = (byte) Adafruit5880Constants.NEOPIXEL_BASE;
@@ -59,17 +69,17 @@ public class Adafruit5880Driver {
 
         setPosition(0);
 
-        byte[] interrupt = new byte[3];
-        interrupt[0] = (byte) Adafruit5880Constants.ENCODER_BASE;
-        interrupt[2] = 0x01;
-
         if (interruptPin != null) {
-            interrupt[1] = (byte) Adafruit5880Constants.ENCODER_INTERUPTSET;
-        } else {
-            interrupt[1] = (byte) Adafruit5880Constants.ENCODER_INTERUPTCLR;
-        }
 
-        i2c.write(interrupt);
+            write8(Adafruit5880Constants.ENCODER_BASE, Adafruit5880Constants.ENCODER_INTERUPTSET, (byte) 0x01);
+
+            this.listener = new Adafruit5880Listener(this);
+            interruptPin.addListener(listener);
+
+        } else {
+
+            write8(Adafruit5880Constants.ENCODER_BASE, Adafruit5880Constants.ENCODER_INTERUPTCLR, (byte) 0x01);
+        }
     }
 
     public void setPixel(int color) throws Exception {
@@ -119,9 +129,29 @@ public class Adafruit5880Driver {
         return true;
     }
 
+    public boolean isPressed() {
+
+        i2c.writeRegister((byte) Adafruit5880Constants.GPIO_BASE, (byte) Adafruit5880Constants.GPIO_BULK);
+
+        try {
+            Thread.sleep(8);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        ByteBuffer buf = i2c.readRegisterByteBuffer(Adafruit5880Constants.GPIO_BASE, 4);
+        int result = buf.getInt() & 1 << 24;
+        if (result == 0) {
+            return true;
+        }
+        return false;
+    }
+
     public void addButtonListener(Consumer<Boolean> listener) {
+        listener.accept(true);
     }
 
     public void addPositionListener(Consumer<Integer> listener) {
+        listener.accept(5);
     }
 }
