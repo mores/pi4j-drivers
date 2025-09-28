@@ -19,6 +19,9 @@ class Adafruit5880Constants {
     public static final byte GPIO_INTERUPTSET = 0x08;
     public static final byte GPIO_INTERUPTCLR = 0x09;
 
+    public static final int BUTTON_PIN_NUMBER = 24;
+    public static final int BUTTON_MASK = 1 << BUTTON_PIN_NUMBER;
+
     public static final byte NEOPIXEL_BASE = 0x0E;
     public static final byte NEOPIXEL_BUF = 0x04;
     public static final byte NEOPIXEL_BUF_LENGTH = 0x03;

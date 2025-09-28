@@ -10,7 +10,8 @@ import com.pi4j.io.i2c.I2C;
 import com.pi4j.io.gpio.digital.DigitalInput;
 
 /*
- * The Adafruit5880 uses an ATSAMD09 microcontroller
+ * The Adafruit5880 uses an ATSAMD09 microcontroller - seesaw
+ * The push button on the rotary encoder is connected to seesaw pin 24
  * https://github.com/adafruit/Adafruit_Seesaw/blob/985b41efae3d9a8cba12a7b4d9ff0d226f9e0759/Adafruit_seesaw.cpp
  */
 
@@ -72,6 +73,7 @@ public class Adafruit5880Driver {
         if (interruptPin != null) {
 
             write8(Adafruit5880Constants.ENCODER_BASE, Adafruit5880Constants.ENCODER_INTERUPTSET, (byte) 0x01);
+            write8(Adafruit5880Constants.GPIO_BASE, Adafruit5880Constants.GPIO_INTERUPTSET, (byte) 0xFF);
 
             this.listener = new Adafruit5880Listener(this);
             interruptPin.addListener(listener);
@@ -79,6 +81,7 @@ public class Adafruit5880Driver {
         } else {
 
             write8(Adafruit5880Constants.ENCODER_BASE, Adafruit5880Constants.ENCODER_INTERUPTCLR, (byte) 0x01);
+            write8(Adafruit5880Constants.GPIO_BASE, Adafruit5880Constants.GPIO_INTERUPTCLR, (byte) 0xFF);
         }
     }
 
@@ -139,19 +142,19 @@ public class Adafruit5880Driver {
             throw new RuntimeException(e);
         }
 
-        ByteBuffer buf = i2c.readRegisterByteBuffer(Adafruit5880Constants.GPIO_BASE, 4);
-        int result = buf.getInt() & 1 << 24;
+        ByteBuffer buffer = i2c.readRegisterByteBuffer(Adafruit5880Constants.GPIO_BASE, 4);
+        int result = buffer.getInt() & Adafruit5880Constants.BUTTON_MASK;
         if (result == 0) {
             return true;
         }
         return false;
     }
 
-    public void addButtonListener(Consumer<Boolean> listener) {
-        listener.accept(true);
+    public void addButtonListener(Consumer<Boolean> buttonListener) {
+        this.listener.addButtonListener(buttonListener);
     }
 
-    public void addPositionListener(Consumer<Integer> listener) {
-        listener.accept(5);
+    public void addPositionListener(Consumer<Integer> positionListener) {
+        this.listener.addPositionListener(positionListener);
     }
 }
