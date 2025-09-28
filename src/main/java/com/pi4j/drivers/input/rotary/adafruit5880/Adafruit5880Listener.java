@@ -1,6 +1,9 @@
 package com.pi4j.drivers.input.rotary.adafruit5880;
 
+import java.util.List;
+import java.util.ArrayList;
 import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,22 +18,24 @@ public class Adafruit5880Listener implements DigitalStateChangeListener {
 
     private Adafruit5880Driver driver;
 
-    private Consumer<Boolean> buttonListener;
-    private Consumer<Integer> positionListener;
+    private List<Consumer<Boolean>> buttonListeners;
+    private List<IntConsumer> positionListeners;
 
     private int lastKnownPosition;
     private boolean lastKnownButtonState;
 
     public Adafruit5880Listener(Adafruit5880Driver driver) {
         this.driver = driver;
+        this.buttonListeners = new ArrayList<>();
+        this.positionListeners = new ArrayList<>();
     }
 
     public void addButtonListener(Consumer<Boolean> buttonListener) {
-        this.buttonListener = buttonListener;
+        this.buttonListeners.add(buttonListener);
     }
 
-    public void addPositionListener(Consumer<Integer> positionListener) {
-        this.positionListener = positionListener;
+    public void addPositionListener(IntConsumer positionListener) {
+        this.positionListeners.add(positionListener);
     }
 
     @Override
@@ -43,13 +48,19 @@ public class Adafruit5880Listener implements DigitalStateChangeListener {
             if (lastKnownPosition != driver.getPosition()) {
                 lastKnownPosition = driver.getPosition();
                 log.debug("Position changed: " + lastKnownPosition);
-                positionListener.accept(lastKnownPosition);
+
+                for (IntConsumer positionListener : positionListeners) {
+                    positionListener.accept(lastKnownPosition);
+                }
             }
 
             if (lastKnownButtonState != driver.isPressed()) {
                 lastKnownButtonState = driver.isPressed();
                 log.debug("Button changed pressed: " + driver.isPressed());
-                buttonListener.accept(lastKnownButtonState);
+
+                for (Consumer<Boolean> buttonListener : buttonListeners) {
+                    buttonListener.accept(lastKnownButtonState);
+                }
             }
         }
     }

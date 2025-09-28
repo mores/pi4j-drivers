@@ -2,6 +2,7 @@ package com.pi4j.drivers.input.rotary.adafruit5880;
 
 import java.nio.ByteBuffer;
 import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -154,7 +155,7 @@ public class Adafruit5880Driver {
         this.listener.addButtonListener(buttonListener);
     }
 
-    public void addPositionListener(Consumer<Integer> positionListener) {
+    public void addPositionListener(IntConsumer positionListener) {
         this.listener.addPositionListener(positionListener);
     }
 }
