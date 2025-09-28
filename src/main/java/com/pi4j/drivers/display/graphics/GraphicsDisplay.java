@@ -243,6 +243,15 @@ public class GraphicsDisplay implements Closeable {
 
     /** Transfers the given display buffer area to the display driver, mapping the rotation */
     private void transferBuffer(int xMin, int yMin, int xMax, int yMax) {
+        int xGranularity = driver.getDisplayInfo().getXGranularity();
+        if (rotation == Rotation.ROTATE_0 || rotation == Rotation.ROTATE_180) {
+            xMin = (xMin / xGranularity) * xGranularity;
+            xMax = ((xMax + xGranularity - 1) / xGranularity) * xGranularity;
+        } else {
+            yMin = (yMin / xGranularity) * xGranularity;
+            yMax = ((yMax + xGranularity - 1) / xGranularity) * xGranularity;
+        }
+
         switch (rotation) {
             case ROTATE_0 ->
                 transferBuffer(pixelAddress(xMin, yMin), 1, displayWidth, xMin, yMin, xMax, yMax);
@@ -258,10 +267,6 @@ public class GraphicsDisplay implements Closeable {
     /** Transfers the given display buffer area to the display driver */
     private void transferBuffer(int sourceAddress, int sourceStrideX, int sourceStrideY, int xMin, int yMin, int xMax, int yMax) {
         synchronized (lock) {
-            int xGranularity = driver.getDisplayInfo().getXGranularity();
-            xMin = (xMin / xGranularity) * xGranularity;
-            xMax = ((xMax + xGranularity - 1) / xGranularity) * xGranularity;
-
             int width = xMax - xMin;
             int height = yMax - yMin;
 
