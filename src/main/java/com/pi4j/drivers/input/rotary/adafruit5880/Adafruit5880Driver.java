@@ -1,6 +1,8 @@
 package com.pi4j.drivers.input.rotary.adafruit5880;
 
 import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 
@@ -9,6 +11,9 @@ import org.slf4j.LoggerFactory;
 
 import com.pi4j.io.i2c.I2C;
 import com.pi4j.io.gpio.digital.DigitalInput;
+import com.pi4j.io.gpio.digital.DigitalState;
+import com.pi4j.io.gpio.digital.DigitalStateChangeEvent;
+import com.pi4j.io.gpio.digital.DigitalStateChangeListener;
 
 /*
  * The Adafruit5880 uses an ATSAMD09 microcontroller - seesaw
@@ -37,18 +42,10 @@ public class Adafruit5880Driver {
         init();
     }
 
-    private void write8(byte first, byte second, byte third) {
-        byte[] data = new byte[3];
-        data[0] = first;
-        data[1] = second;
-        data[2] = third;
-        i2c.write(data);
-    }
-
     private void init() {
 
         // perform a software reset. This resets all seesaw registers to their default values
-        write8(Adafruit5880Constants.STATUS_BASE, Adafruit5880Constants.STATUS_SWRST, (byte) 0xFF);
+        i2c.write(Adafruit5880Constants.STATUS_BASE, Adafruit5880Constants.STATUS_SWRST, (byte) 0xFF);
 
         i2c.writeRegister((byte) Adafruit5880Constants.STATUS_BASE, (byte) Adafruit5880Constants.STATUS_HW_ID);
         try {
@@ -60,7 +57,7 @@ public class Adafruit5880Driver {
         byte chipId = (byte) i2c.readRegister((byte) Adafruit5880Constants.STATUS_BASE);
         log.info("seesaw chipId: " + chipId);
 
-        write8(Adafruit5880Constants.NEOPIXEL_BASE, Adafruit5880Constants.NEOPIXEL_PIN, (byte) 0x06);
+        i2c.write(Adafruit5880Constants.NEOPIXEL_BASE, Adafruit5880Constants.NEOPIXEL_PIN, (byte) 0x06);
 
         byte[] bufLength = new byte[4];
         bufLength[0] = (byte) Adafruit5880Constants.NEOPIXEL_BASE;
@@ -73,16 +70,16 @@ public class Adafruit5880Driver {
 
         if (interruptPin != null) {
 
-            write8(Adafruit5880Constants.ENCODER_BASE, Adafruit5880Constants.ENCODER_INTERUPTSET, (byte) 0x01);
-            write8(Adafruit5880Constants.GPIO_BASE, Adafruit5880Constants.GPIO_INTERUPTSET, (byte) 0xFF);
+            i2c.write(Adafruit5880Constants.ENCODER_BASE, Adafruit5880Constants.ENCODER_INTERUPTSET, (byte) 0x01);
+            i2c.write(Adafruit5880Constants.GPIO_BASE, Adafruit5880Constants.GPIO_INTERUPTSET, (byte) 0xFF);
 
             this.listener = new Adafruit5880Listener(this);
             interruptPin.addListener(listener);
 
         } else {
 
-            write8(Adafruit5880Constants.ENCODER_BASE, Adafruit5880Constants.ENCODER_INTERUPTCLR, (byte) 0x01);
-            write8(Adafruit5880Constants.GPIO_BASE, Adafruit5880Constants.GPIO_INTERUPTCLR, (byte) 0xFF);
+            i2c.write(Adafruit5880Constants.ENCODER_BASE, Adafruit5880Constants.ENCODER_INTERUPTCLR, (byte) 0x01);
+            i2c.write(Adafruit5880Constants.GPIO_BASE, Adafruit5880Constants.GPIO_INTERUPTCLR, (byte) 0xFF);
         }
     }
 
@@ -173,5 +170,67 @@ public class Adafruit5880Driver {
 
     public void removePositionListener(IntConsumer positionListener) {
         this.listener.removePositionListener(positionListener);
+    }
+
+    private class Adafruit5880Listener implements DigitalStateChangeListener {
+
+        private static Logger log = LoggerFactory.getLogger(Adafruit5880Listener.class);
+
+        private Adafruit5880Driver driver;
+
+        private List<Consumer<Boolean>> buttonListeners;
+        private List<IntConsumer> positionListeners;
+
+        private int lastKnownPosition;
+        private boolean lastKnownButtonState;
+
+        public Adafruit5880Listener(Adafruit5880Driver driver) {
+            this.driver = driver;
+            this.buttonListeners = new ArrayList<>();
+            this.positionListeners = new ArrayList<>();
+        }
+
+        public void addButtonListener(Consumer<Boolean> buttonListener) {
+            this.buttonListeners.add(buttonListener);
+        }
+
+        public void removeButtonListener(Consumer<Boolean> buttonListener) {
+            this.buttonListeners.remove(buttonListener);
+        }
+
+        public void addPositionListener(IntConsumer positionListener) {
+            this.positionListeners.add(positionListener);
+        }
+
+        public void removePositionListener(IntConsumer positionListener) {
+            this.positionListeners.remove(positionListener);
+        }
+
+        @Override
+        public void onDigitalStateChange(DigitalStateChangeEvent event) {
+
+            log.trace(">>> Enter: onDigitalStateChange: " + event);
+
+            if (event.state() == DigitalState.LOW) {
+                // Only way to clear the interupt is to read the position
+                if (lastKnownPosition != driver.getPosition()) {
+                    lastKnownPosition = driver.getPosition();
+                    log.debug("Position changed: " + lastKnownPosition);
+
+                    for (IntConsumer positionListener : positionListeners) {
+                        positionListener.accept(lastKnownPosition);
+                    }
+                }
+
+                if (lastKnownButtonState != driver.isPressed()) {
+                    lastKnownButtonState = driver.isPressed();
+                    log.debug("Button changed pressed: " + driver.isPressed());
+
+                    for (Consumer<Boolean> buttonListener : buttonListeners) {
+                        buttonListener.accept(lastKnownButtonState);
+                    }
+                }
+            }
+        }
     }
 }
