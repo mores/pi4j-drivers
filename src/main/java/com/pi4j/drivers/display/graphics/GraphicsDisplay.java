@@ -2,11 +2,12 @@ package com.pi4j.drivers.display.graphics;
 
 import com.pi4j.drivers.display.BitmapFont;
 
+import java.io.Closeable;
 import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class GraphicsDisplay {
+public class GraphicsDisplay implements Closeable {
     // TODO(https://github.com/Pi4J/pi4j/issues/475): Remove or update this limitation.
     private static final int MAX_TRANSFER_SIZE = 4000;
 
@@ -48,6 +49,12 @@ public class GraphicsDisplay {
         transferBuffer = new byte[Math.min(
                 MAX_TRANSFER_SIZE,
                 (displayWidth * displayHeight * driver.getDisplayInfo().getPixelFormat().getBitCount() + 7) / 8)];
+    }
+
+    @Override
+    public void close() {
+        flush();
+        driver.close();
     }
 
     /** Draws an image at the given coordinates */
@@ -100,6 +107,22 @@ public class GraphicsDisplay {
                 modifiedYMax = Integer.MIN_VALUE;
             }
         }
+    }
+
+    /**
+     * Returns the display height in pixels. This might differ from the driver display information, as the screen
+     * might be rotated.
+     */
+    public int getHeight() {
+        return displayHeight;
+    }
+
+    /**
+     * Returns the display width in pixels. This might differ from the driver display information, as the screen
+     * might be rotated.
+     */
+    public int getWidth() {
+        return displayWidth;
     }
 
     /**
@@ -168,7 +191,6 @@ public class GraphicsDisplay {
         return w * scaleX;
     }
 
-
     /** Sets the pixel at the given coordinates to the given color */
     public void setPixel(int x, int y, int color) {
         synchronized (lock) {
@@ -221,6 +243,15 @@ public class GraphicsDisplay {
 
     /** Transfers the given display buffer area to the display driver, mapping the rotation */
     private void transferBuffer(int xMin, int yMin, int xMax, int yMax) {
+        int xGranularity = driver.getDisplayInfo().getXGranularity();
+        if (rotation == Rotation.ROTATE_0 || rotation == Rotation.ROTATE_180) {
+            xMin = (xMin / xGranularity) * xGranularity;
+            xMax = ((xMax + xGranularity - 1) / xGranularity) * xGranularity;
+        } else {
+            yMin = (yMin / xGranularity) * xGranularity;
+            yMax = ((yMax + xGranularity - 1) / xGranularity) * xGranularity;
+        }
+
         switch (rotation) {
             case ROTATE_0 ->
                 transferBuffer(pixelAddress(xMin, yMin), 1, displayWidth, xMin, yMin, xMax, yMax);
@@ -236,10 +267,6 @@ public class GraphicsDisplay {
     /** Transfers the given display buffer area to the display driver */
     private void transferBuffer(int sourceAddress, int sourceStrideX, int sourceStrideY, int xMin, int yMin, int xMax, int yMax) {
         synchronized (lock) {
-            int xGranularity = driver.getDisplayInfo().getXGranularity();
-            xMin = (xMin / xGranularity) * xGranularity;
-            xMax = ((xMax + xGranularity - 1) / xGranularity) * xGranularity;
-
             int width = xMax - xMin;
             int height = yMax - yMin;
 
@@ -264,5 +291,4 @@ public class GraphicsDisplay {
             }
         }
     }
-
 }
