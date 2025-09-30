@@ -6,6 +6,8 @@ import java.nio.ByteOrder;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.function.Consumer;
 
 /**
@@ -30,6 +32,10 @@ public class LinuxInputDriver implements Closeable {
     private final Object lock = new Object(); // Gates the listener list.
     private final List<Consumer<Event>> listeners = new ArrayList<>();
     private final InputStream inputStream;
+    private final ByteBuffer buffer = ByteBuffer.allocate(Event.STRUCT_SIZE).order(ByteOrder.LITTLE_ENDIAN);
+
+    private final Timer timer = new Timer();
+
     private boolean closed;
 
     /**
@@ -72,32 +78,11 @@ public class LinuxInputDriver implements Closeable {
     public LinuxInputDriver(String devicePath) {
         try {
             this.inputStream = new BufferedInputStream(new FileInputStream(devicePath));
-
-            new Thread(new Runnable() {
-                @Override
+            timer.schedule(new TimerTask() {
                 public void run() {
-                    try {
-                        ByteBuffer buffer = ByteBuffer.allocate(Event.STRUCT_SIZE);
-                        buffer.order(ByteOrder.LITTLE_ENDIAN);
-                        while (!closed && inputStream.readNBytes(buffer.array(), 0, Event.STRUCT_SIZE) == Event.STRUCT_SIZE) {
-                            int type = buffer.getShort(Event.OFFSET_TYPE);
-                            if (type != 0) {
-                                long seconds = buffer.getLong(Event.OFFSET_SECONDS);
-                                long microSeconds = buffer.getLong(Event.OFFSET_MICROSECONDS);
-                                int code = buffer.getShort(Event.OFFSET_CODE);
-                                int value = buffer.getInt(Event.OFFSET_VALUE);
-                                Event event = new Event(Instant.ofEpochSecond(seconds, microSeconds * 1000), type, code, value);
-                                notifyListeners(event);
-                            }
-                        }
-                    } catch (IOException e) {
-                        if (!closed) {
-                            throw new com.pi4j.io.exception.IOException(e);
-                        }
-                    }
+                    processEvent();
                 }
-            }).start();
-
+            }, 0);
         } catch (IOException e) {
             throw new com.pi4j.io.exception.IOException(e);
         }
@@ -118,6 +103,7 @@ public class LinuxInputDriver implements Closeable {
     @Override
     public void close() {
         closed = true;
+        timer.cancel();
         try {
             inputStream.close();
         } catch (IOException e) {
@@ -125,10 +111,35 @@ public class LinuxInputDriver implements Closeable {
         }
     }
 
-    private void notifyListeners(Event event) {
-        synchronized (lock) {
-            for (Consumer<Event> listener : this.listeners) {
-                listener.accept(event);
+    // Private methods
+
+    private void processEvent() {
+        try {
+            if (closed || inputStream.readNBytes(buffer.array(), 0, Event.STRUCT_SIZE) != Event.STRUCT_SIZE) {
+                return;
+            }
+            int type = buffer.getShort(Event.OFFSET_TYPE);
+            if (type != 0) {
+                long seconds = buffer.getLong(Event.OFFSET_SECONDS);
+                long microSeconds = buffer.getLong(Event.OFFSET_MICROSECONDS);
+                int code = buffer.getShort(Event.OFFSET_CODE);
+                int value = buffer.getInt(Event.OFFSET_VALUE);
+                Event event = new Event(Instant.ofEpochSecond(seconds, microSeconds * 1000), type, code, value);
+                synchronized (lock) {
+                    for (Consumer<Event> listener : this.listeners) {
+                        listener.accept(event);
+                    }
+                }
+            }
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    processEvent();
+                }
+            }, 0);
+        } catch (IOException e) {
+            if (!closed) {
+                throw new com.pi4j.io.exception.IOException(e);
             }
         }
     }
