@@ -35,34 +35,18 @@ public class SenseHat {
     public GameController getController() {
         if (controller == null) {
             LinuxInputDriver inputDriver = getInputDriver();
-            inputDriver.addListener(event -> {
-                if (event.getType() == LinuxInputDriver.EV_KEY) {
-                    Boolean state = switch (event.getValue()) {
-                        case LinuxInputDriver.STATE_PRESS -> true;
-                        case LinuxInputDriver.STATE_RELEASE -> false;
-                        default -> null;
-                    };
-                    if (state != null) {
-                        switch (event.getCode()) {
-                            case LinuxInputDriver.KEY_DOWN -> down.setState(state);
-                            case LinuxInputDriver.KEY_UP -> up.setState(state);
-                            case LinuxInputDriver.KEY_LEFT -> left.setState(state);
-                            case LinuxInputDriver.KEY_RIGHT -> right.setState(state);
-                            case LinuxInputDriver.KEY_ENTER -> center.setState(state);
-                        }
-                    }
-                }
-            });
+            inputDriver.addListener(this::handleEvent);
             controller = new GameController.Builder(pi4j)
-                    .addListenableOnOffRead(GameController.Key.DOWN, down)
-                    .addListenableOnOffRead(GameController.Key.LEFT, left)
-                    .addListenableOnOffRead(GameController.Key.RIGHT, right)
-                    .addListenableOnOffRead(GameController.Key.UP, up)
-                    .addListenableOnOffRead(GameController.Key.CENTER, center)
+                    .addDigitalInput(GameController.Key.DOWN, down)
+                    .addDigitalInput(GameController.Key.LEFT, left)
+                    .addDigitalInput(GameController.Key.RIGHT, right)
+                    .addDigitalInput(GameController.Key.UP, up)
+                    .addDigitalInput(GameController.Key.CENTER, center)
                     .build();
         }
         return controller;
     }
+
 
     public GraphicsDisplayDriver getDisplayDriver() {
         if (displayDriver == null) {
@@ -76,5 +60,26 @@ public class SenseHat {
             display = new GraphicsDisplay(getDisplayDriver());
         }
         return display;
+    }
+
+    private void handleEvent(LinuxInputDriver.Event event) {
+        if (event.getType() != LinuxInputDriver.EV_KEY) {
+            return;
+        }
+        Boolean state = switch (event.getValue()) {
+            case LinuxInputDriver.STATE_PRESS -> true;
+            case LinuxInputDriver.STATE_RELEASE -> false;
+            default -> null;
+        };
+        if (state == null) {
+            return;
+        }
+        switch (event.getCode()) {
+            case LinuxInputDriver.KEY_DOWN -> down.setState(state);
+            case LinuxInputDriver.KEY_UP -> up.setState(state);
+            case LinuxInputDriver.KEY_LEFT -> left.setState(state);
+            case LinuxInputDriver.KEY_RIGHT -> right.setState(state);
+            case LinuxInputDriver.KEY_ENTER -> center.setState(state);
+        }
     }
 }
