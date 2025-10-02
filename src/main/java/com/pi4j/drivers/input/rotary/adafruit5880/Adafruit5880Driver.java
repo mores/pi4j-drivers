@@ -19,6 +19,10 @@ import com.pi4j.io.gpio.digital.DigitalStateChangeListener;
  * The Adafruit5880 uses an ATSAMD09 microcontroller - seesaw
  * The push button on the rotary encoder is connected to seesaw pin 24
  * https://github.com/adafruit/Adafruit_Seesaw/blob/985b41efae3d9a8cba12a7b4d9ff0d226f9e0759/Adafruit_seesaw.cpp
+ *
+ * clockwise will increment the position
+ * counter clockwise will decrement the position
+ * one full rotation ( 360 degrees ) will result in position 20
  */
 
 public class Adafruit5880Driver {
@@ -28,6 +32,9 @@ public class Adafruit5880Driver {
     private I2C i2c;
     private DigitalInput interruptPin;
     private Adafruit5880Listener listener;
+
+    private List<Consumer<Boolean>> buttonListeners;
+    private List<IntConsumer> positionListeners;
 
     public Adafruit5880Driver(I2C i2c) {
         this.i2c = i2c;
@@ -43,6 +50,9 @@ public class Adafruit5880Driver {
     }
 
     private void init() {
+
+        this.buttonListeners = new ArrayList<>();
+        this.positionListeners = new ArrayList<>();
 
         // perform a software reset. This resets all seesaw registers to their default values
         i2c.write(Adafruit5880Constants.STATUS_BASE, Adafruit5880Constants.STATUS_SWRST, (byte) 0xFF);
@@ -73,7 +83,7 @@ public class Adafruit5880Driver {
             i2c.write(Adafruit5880Constants.ENCODER_BASE, Adafruit5880Constants.ENCODER_INTERUPTSET, (byte) 0x01);
             i2c.write(Adafruit5880Constants.GPIO_BASE, Adafruit5880Constants.GPIO_INTERUPTSET, (byte) 0xFF);
 
-            this.listener = new Adafruit5880Listener(this);
+            this.listener = new Adafruit5880Listener();
             interruptPin.addListener(listener);
 
         } else {
@@ -153,11 +163,11 @@ public class Adafruit5880Driver {
             throw new RuntimeException(
                     "Interrupt pin needs to be wired & DigitalInput needs to be configured in order to listen for button events");
         }
-        this.listener.addButtonListener(buttonListener);
+        this.buttonListeners.add(buttonListener);
     }
 
     public void removeButtonListener(Consumer<Boolean> buttonListener) {
-        this.listener.removeButtonListener(buttonListener);
+        this.buttonListeners.remove(buttonListener);
     }
 
     public void addPositionListener(IntConsumer positionListener) {
@@ -165,45 +175,21 @@ public class Adafruit5880Driver {
             throw new RuntimeException(
                     "Interrupt pin needs to be wired & DigitalInput needs to be configured in order to listen for rotation events");
         }
-        this.listener.addPositionListener(positionListener);
+        this.positionListeners.add(positionListener);
     }
 
     public void removePositionListener(IntConsumer positionListener) {
-        this.listener.removePositionListener(positionListener);
+        this.positionListeners.remove(positionListener);
     }
 
     private class Adafruit5880Listener implements DigitalStateChangeListener {
 
         private static Logger log = LoggerFactory.getLogger(Adafruit5880Listener.class);
 
-        private Adafruit5880Driver driver;
-
-        private List<Consumer<Boolean>> buttonListeners;
-        private List<IntConsumer> positionListeners;
-
         private int lastKnownPosition;
         private boolean lastKnownButtonState;
 
-        public Adafruit5880Listener(Adafruit5880Driver driver) {
-            this.driver = driver;
-            this.buttonListeners = new ArrayList<>();
-            this.positionListeners = new ArrayList<>();
-        }
-
-        public void addButtonListener(Consumer<Boolean> buttonListener) {
-            this.buttonListeners.add(buttonListener);
-        }
-
-        public void removeButtonListener(Consumer<Boolean> buttonListener) {
-            this.buttonListeners.remove(buttonListener);
-        }
-
-        public void addPositionListener(IntConsumer positionListener) {
-            this.positionListeners.add(positionListener);
-        }
-
-        public void removePositionListener(IntConsumer positionListener) {
-            this.positionListeners.remove(positionListener);
+        public Adafruit5880Listener() {
         }
 
         @Override
@@ -213,8 +199,8 @@ public class Adafruit5880Driver {
 
             if (event.state() == DigitalState.LOW) {
                 // Only way to clear the interupt is to read the position
-                if (lastKnownPosition != driver.getPosition()) {
-                    lastKnownPosition = driver.getPosition();
+                if (lastKnownPosition != Adafruit5880Driver.this.getPosition()) {
+                    lastKnownPosition = Adafruit5880Driver.this.getPosition();
                     log.debug("Position changed: " + lastKnownPosition);
 
                     for (IntConsumer positionListener : positionListeners) {
@@ -222,9 +208,9 @@ public class Adafruit5880Driver {
                     }
                 }
 
-                if (lastKnownButtonState != driver.isPressed()) {
-                    lastKnownButtonState = driver.isPressed();
-                    log.debug("Button changed pressed: " + driver.isPressed());
+                if (lastKnownButtonState != Adafruit5880Driver.this.isPressed()) {
+                    lastKnownButtonState = Adafruit5880Driver.this.isPressed();
+                    log.debug("Button changed pressed: " + Adafruit5880Driver.this.isPressed());
 
                     for (Consumer<Boolean> buttonListener : buttonListeners) {
                         buttonListener.accept(lastKnownButtonState);
