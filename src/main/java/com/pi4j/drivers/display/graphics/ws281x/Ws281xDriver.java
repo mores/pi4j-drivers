@@ -5,6 +5,9 @@ import com.pi4j.drivers.display.graphics.GraphicsDisplayInfo;
 import com.pi4j.drivers.display.graphics.PixelFormat;
 import com.pi4j.io.spi.Spi;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+
 /**
  * Implements a driver for WS 281x LED strips using a SPI interface. Note that the baud rate of the
  * SPI channel needs to be set to SPI_BAUD.
@@ -13,6 +16,12 @@ import com.pi4j.io.spi.Spi;
  * https://wp.josh.com/2014/05/13/ws2812-neopixels-are-not-so-finicky-once-you-get-to-know-them/
  */
 public class Ws281xDriver implements GraphicsDisplayDriver {
+
+    public enum Pattern {
+        ROWS,
+        ZIGZAG,
+    }
+
     /** The number of color channels (r, g, b); each using one byte. */
     private static final int COLOR_CHANNELS = 3;
     /**
@@ -30,19 +39,36 @@ public class Ws281xDriver implements GraphicsDisplayDriver {
     private final byte[] spiBuffer;
     private final GraphicsDisplayInfo displayInfo;
     private final Spi spi;
-    private final boolean zigzag;
+    private final int[] pixelMap;
+
+    private Instant busyUntil = Instant.now();
+    private int brightness = 64;
+
+    public static int[] createPixelMap(int width, int height, Pattern pattern) {
+        int[] result = new int[width * height];
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                 result[y * width + x] = y * width + ((pattern == Pattern.ROWS || (y & 1) == 0) ? x : width - x - 1);
+            }
+        }
+        return result;
+    }
 
     /**
-     * Creates a WS281x driver instance.
+     * Creates a WS281x driver instance with a "rows" arrangement of pixels (see Pattern).
      * <p>
      * Note that the baud rate of the SPI channel handed in needs to configured to SPI_BAUD.
-     * <p>
-     * For two-dimensional LED strip arrangement, the driver assumes that LED index 0 is at coordinates (0,0)
-     * and the start LED index of each subsequent row is at y * width. For a "zigzag" arrangement, use the
-     * other constructor.
      */
     public Ws281xDriver(Spi spi, int width, int height) {
-        this(spi, width, height, false);
+        this(spi, width, height, Pattern.ROWS);
+    }
+
+    /**
+     * Creates a WS281x driver instance with the given pixel arrangement pattern.
+     * <p>
+     */
+    public Ws281xDriver(Spi spi, int width, int height, Pattern pattern) {
+        this(spi, width, height, createPixelMap(width, height, pattern));
     }
 
     /**
@@ -50,12 +76,15 @@ public class Ws281xDriver implements GraphicsDisplayDriver {
      * <p>
      * Note that the baud rate of the SPI channel handed in needs to configured to SPI_BAUD.
      * <p>
-     * If the zigzag parameter is set to true, for two-dimensional LED strip arrangement, the driver assumes that LED
-     * order reverses direction in each row, starting with index 0 is at coordinates (0,0).
+     * The pixelMap parameter maps a given pixel index (y * width + x) to the led index in the strip.
      */
-    public Ws281xDriver(Spi spi, int width, int height, boolean zigzag) {
+    public Ws281xDriver(Spi spi, int width, int height, int[] pixelMap) {
         this.spi = spi;
-        this.zigzag = zigzag;
+        if (pixelMap.length != width * height) {
+            throw new IllegalArgumentException("The pixel map size (" + pixelMap.length + ") must match the LED strip length (" + width * height + ")");
+        }
+        this.pixelMap = new int[pixelMap.length];
+        System.arraycopy(pixelMap, 0, this.pixelMap, 0, pixelMap.length);
 
         // We just check it's not the default to allow device-depending adjustments while still avoiding the
         // most simple footgun here.
@@ -77,22 +106,14 @@ public class Ws281xDriver implements GraphicsDisplayDriver {
         int src = 0;
         int lastChangedByte = 0;
         for (int i = 0; i < height; i++) {
-            int dy = y + i;
-            int dst;
-            int dstStride;
-            if (zigzag && (dy & 1) == 1) {
-                dst = ((dy + 1) * displayInfo.getWidth() - x - 1) * COLOR_CHANNELS * BIT_STRETCH;
-                dstStride = -2 * COLOR_CHANNELS * BIT_STRETCH;
-            } else {
-                dst = (dy * displayInfo.getWidth() + x) * COLOR_CHANNELS * BIT_STRETCH;
-                dstStride = 0;
-            }
             for (int j = 0; j < width; j++) {
+                int dst = getPixelAddress(x + j, y + i);
                 for (int k = 0; k < COLOR_CHANNELS; k++) {
-                    byte b = bytes[src++];
+                    // Swap color order to GRB
+                    int value = (bytes[src + k == 0 ? 1 : k == 1 ? 0 : 2] & 0xff) * brightness / 255;
                     for (int bitIdex = 0; bitIdex < 8; bitIdex += 2) {
-                        byte newValue = (byte) ((((b << bitIdex) & 0x80) == 0 ? 0b1000_0000 : 0b1100_0000)
-                                | (((b << bitIdex) & 0x40) == 0 ? 0b1000 : 0b1100));
+                        byte newValue = (byte) ((((value << bitIdex) & 0x80) == 0 ? 0b1000_0000 : 0b1100_0000)
+                                | (((value << bitIdex) & 0x40) == 0 ? 0b1000 : 0b1100));
                         if (newValue != spiBuffer[dst]) {
                             spiBuffer[dst] = newValue;
                             lastChangedByte = dst;
@@ -100,7 +121,7 @@ public class Ws281xDriver implements GraphicsDisplayDriver {
                         dst++;
                     }
                 }
-                dst += dstStride;
+                src += 3;
             }
         }
         // We always need to start at 0, but we only need to send up to the last changed pixel.
@@ -108,12 +129,50 @@ public class Ws281xDriver implements GraphicsDisplayDriver {
         // middle of a pixel.
         int lastChangedPixel = lastChangedByte / COLOR_CHANNELS / BIT_STRETCH;
         if (lastChangedPixel > 0) {
+            materializeDelay();
             spi.write(spiBuffer, 0, lastChangedPixel * COLOR_CHANNELS * BIT_STRETCH);
+            setDelayNanos(50000);
         }
+    }
+
+    /** Sets the brightness of the LED matrix to the given value between 0 and 255. The default value is 64. */
+    public void setBrightness(int brightness) {
+        this.brightness = Math.max(0, Math.min(brightness, 255));
     }
 
     @Override
     public void close() {
         spi.close();
+    }
+
+
+    // Private methods
+
+
+    private int getPixelAddress(int x, int y) {
+        int pixelIndex = pixelMap[y * displayInfo.getWidth() + x];
+        return pixelIndex * COLOR_CHANNELS * BIT_STRETCH;
+    }
+
+    private void materializeDelay() {
+        while (true) {
+            long remaining = Instant.now().until(busyUntil, ChronoUnit.NANOS);
+            if (remaining < 0) {
+                break;
+            }
+            try {
+                Thread.sleep(remaining / 1_000_000, (int) (remaining % 1_000_000));
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    private void setDelayNanos(long nanos) {
+        Instant target = Instant.now().plusNanos(nanos);
+        if (target.isAfter(busyUntil)) {
+            busyUntil = target;
+        }
     }
 }

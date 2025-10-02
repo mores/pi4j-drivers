@@ -3,7 +3,8 @@ package com.pi4j.drivers.display.graphics;
 public enum PixelFormat {
 
     RGB_444(4, 4, 4), // 12-bit color format with 4 bits for each color channel (red, green, blue)
-    RGB_565(5, 6, 5), // 16-bit color format that uses 5 bits for red, 6 bits for green, and 5 bits for blue
+    RGB_565(5, 6, 5),
+    RGB_565_LE(5, 6, 5), // 16-bit color format that uses 5 bits for red, 6 bits for green, and 5 bits for blue
     RGB_888(8, 8, 8);
 
     private final int redBitCount;
@@ -43,15 +44,21 @@ public enum PixelFormat {
      */
     private void writeBits(int value, int count, byte[] buffer, int bitOffset) {
         int byteOffset = bitOffset / 8;
-        bitOffset %= 8;
-        int mask = ((1 << count) - 1) << (32 - count - bitOffset);
 
-        value <<= (32 - count - bitOffset);
-        while (mask != 0) {
-            buffer[byteOffset] = (byte) ((buffer[byteOffset] & ~(mask >> 24)) | (value >> 24));
-            byteOffset++;
-            value <<= 8;
-            mask <<= 8;
+        if (this == RGB_565_LE) {
+            buffer[byteOffset] = (byte) value;
+            buffer[byteOffset + 1] = (byte) (value >>> 8);
+        } else {
+            bitOffset %= 8;
+            int mask = ((1 << count) - 1) << (32 - count - bitOffset);
+
+            value <<= (32 - count - bitOffset);
+            while (mask != 0) {
+                buffer[byteOffset] = (byte) ((buffer[byteOffset] & ~(mask >> 24)) | (value >> 24));
+                byteOffset++;
+                value <<= 8;
+                mask <<= 8;
+            }
         }
     }
 

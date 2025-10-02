@@ -16,7 +16,7 @@ public class Ws281xDriverTest extends AbstractGraphicsDisplayDriverTest {
     public GraphicsDisplayDriver createDriver(Context pi4j) {
         try {
             Spi spi = pi4j.create(Spi.newConfigBuilder(pi4j).bus(0).address(0).baud(Ws281xDriver.SPI_BAUD).build());
-            return new Ws281xDriver(spi, 8, 8, true);
+            return new Ws281xDriver(spi, 8, 8, Ws281xDriver.Pattern.ZIGZAG);
         } catch (Exception e) {
             // TODO(https://github.com/Pi4J/pi4j/issues/489): Catch Pi4j exceptions instead.
             Assumptions.abort("CrowPi2 I2C LED Matrix not found");
