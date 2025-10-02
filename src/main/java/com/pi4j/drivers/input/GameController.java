@@ -50,9 +50,13 @@ public class GameController implements Closeable {
             this.pi4j = pi4J;
         }
 
-        public Builder addDigitalInput(Key key, int pin) {
-            keyMap.put(key, pi4j.create(DigitalInput.newConfigBuilder(pi4j).address(pin).build()));
+        public Builder addDigitalInput(Key key, ListenableOnOffRead<?> onOff) {
+            keyMap.put(key, onOff);
             return this;
+        }
+
+        public Builder addDigitalInput(Key key, int pin) {
+            return addDigitalInput(key, pi4j.create(DigitalInput.newConfigBuilder(pi4j).address(pin).build()));
         }
 
         public GameController build() {
