@@ -199,8 +199,9 @@ public class Adafruit5880Driver {
 
             if (event.state() == DigitalState.LOW) {
                 // Only way to clear the interupt is to read the position
-                if (lastKnownPosition != Adafruit5880Driver.this.getPosition()) {
-                    lastKnownPosition = Adafruit5880Driver.this.getPosition();
+                int newPosition = getPosition();
+                if (lastKnownPosition != newPosition) {
+                    lastKnownPosition = newPosition;
                     log.debug("Position changed: " + lastKnownPosition);
 
                     for (IntConsumer positionListener : positionListeners) {
