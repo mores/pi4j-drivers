@@ -33,7 +33,7 @@ public class FramebufferDriver implements GraphicsDisplayDriver, Closeable {
     }
 
     public static GraphicsDisplayDriver forSenseHat() {
-        return new FramebufferDriver(resolveFramebufferName(SENSE_HAT_FB_NAME), 8, 8, PixelFormat.RGB_565);
+        return new FramebufferDriver(resolveFramebufferName(SENSE_HAT_FB_NAME), 8, 8, PixelFormat.RGB_565_LE);
     }
 
     public FramebufferDriver(String filename, int width, int height, PixelFormat pixelFormat) {

@@ -29,6 +29,7 @@ public abstract class AbstractGraphicsDisplayDriverTest {
     @Test
     public void testFillRect() throws InterruptedException {
         GraphicsDisplay display = new GraphicsDisplay(createDriver(pi4j));
+        display.setTransferDelayMillis(0);
         int width = display.getWidth();
         int height = display.getHeight();
         display.fillRect(0, 0, width, height, 0x0);
@@ -83,6 +84,12 @@ public abstract class AbstractGraphicsDisplayDriverTest {
         display.close();
     }
 
+    /**
+     * Renders rainbow colors from red on the left to violet on the right
+     * with the brightness starting at 0.1 at the top, increasing to 1 at the bottom
+     * <p>
+     * This should allow for checking color, orientation and brightness correctness.
+     */
     @Test
     public void testSetPixel() throws InterruptedException {
         GraphicsDisplay display = new GraphicsDisplay(createDriver(pi4j));
@@ -93,7 +100,9 @@ public abstract class AbstractGraphicsDisplayDriverTest {
 
         for( int x = 0; x < width; x++ ) {
             for( int y = 0; y < height; y++ ) {
-                display.setPixel( x, y, java.awt.Color.HSBtoRGB((1f * (x + height - y)) / (width + height), 1, 1));
+                display.setPixel(x, y,
+                        java.awt.Color.HSBtoRGB((1f * x) / width, 1, (0.8f * y) / height + 0.2f)
+                );
             }
             Thread.sleep(5);
         }
